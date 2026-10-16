@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *
- * @author Nam
+ * @author Phan Thanh Tu (TV3)
  */
 @WebServlet(name = "VehicleController", urlPatterns = {"/vehicle"})
 public class VehicleController extends HttpServlet {
@@ -85,3 +85,4 @@ public class VehicleController extends HttpServlet {
     }// </editor-fold>
 
 }
+

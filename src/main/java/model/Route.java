@@ -6,8 +6,9 @@ package model;
 
 /**
  *
- * @author Nam
+ * @author Nguyễn Tấn Phát (TV2)
  */
 public class Route {
     
 }
+

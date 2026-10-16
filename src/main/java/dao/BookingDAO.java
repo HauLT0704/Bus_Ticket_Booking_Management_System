@@ -6,8 +6,9 @@ package dao;
 
 /**
  *
- * @author Nam
+ * @author Huỳnh Nhất Bảo (TV4)
  */
 public class BookingDAO {
     
 }
+

@@ -6,8 +6,9 @@ package dao;
 
 /**
  *
- * @author Nam
+ * @author Châu Thành Tâm (TV6)
  */
 public class TransferDAO {
     
 }
+

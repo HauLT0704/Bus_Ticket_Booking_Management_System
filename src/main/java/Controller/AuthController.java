@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *
- * @author Nam
+ * @author Lâm Trung Hậu (TV1)
  */
 @WebServlet(name = "AuthController", urlPatterns = {"/auth"})
 public class AuthController extends HttpServlet {
@@ -85,3 +85,4 @@ public class AuthController extends HttpServlet {
     }// </editor-fold>
 
 }
+

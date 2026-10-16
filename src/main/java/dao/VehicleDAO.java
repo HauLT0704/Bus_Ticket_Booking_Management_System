@@ -6,8 +6,9 @@ package dao;
 
 /**
  *
- * @author Nam
+ * @author Phan Thanh Tu (TV3)
  */
 public class VehicleDAO {
     
 }
+

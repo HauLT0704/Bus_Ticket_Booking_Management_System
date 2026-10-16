@@ -6,8 +6,9 @@ package model;
 
 /**
  *
- * @author Nam
+ * @author Phan Thanh Tu (TV3)
  */
 public class Customer {
     
 }
+

@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *
- * @author Nam
+ * @author Châu Thành Tâm (TV6)
  */
 @WebServlet(name = "TransferController", urlPatterns = {"/transfer"})
 public class TransferController extends HttpServlet {
@@ -85,3 +85,4 @@ public class TransferController extends HttpServlet {
     }// </editor-fold>
 
 }
+

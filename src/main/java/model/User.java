@@ -6,8 +6,9 @@ package model;
 
 /**
  *
- * @author Nam
+ * @author Lâm Trung Hậu (TV1)
  */
 public class User {
     
 }
+

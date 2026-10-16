@@ -1,4 +1,4 @@
-﻿package db;
+package db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,6 +6,9 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * @author Lâm Trung Hậu (TV1)
+ */
 public class DBContext {
     private Connection conn;
     private final String DB_URL = "jdbc:sqlserver://127.0.0.1:1433;databaseName=BusTicketDB;encrypt=false;trustServerCertificate=true";
@@ -33,3 +36,4 @@ public class DBContext {
         return conn;
     }
 }
+

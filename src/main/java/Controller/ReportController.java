@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *
- * @author Nam
+ * @author Hứa Hạo Danh (TV5)
  */
 @WebServlet(name = "ReportController", urlPatterns = {"/report"})
 public class ReportController extends HttpServlet {
@@ -85,3 +85,4 @@ public class ReportController extends HttpServlet {
     }// </editor-fold>
 
 }
+
