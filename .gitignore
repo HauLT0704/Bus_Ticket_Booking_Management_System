@@ -1,0 +1,22 @@
+﻿# Target compiled classes
+target/
+bin/
+
+# NetBeans
+nbproject/private/
+build/
+dist/
+nbdist/
+.nb-gradle/
+
+# IntelliJ / Eclipse
+.idea/
+*.iml
+.metadata/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
