@@ -1,7 +1,7 @@
 <%-- 
     Document   : login
     Created on : Oct 16, 2026, 10:01:03 PM
-    Author     : Nam
+    Author     : Lâm Trung Hậu 
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
@@ -9,9 +9,11 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
+        <title>Login</title>
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     </head>
-    <body>
-        <h1>Hello World!</h1>
+    <body class="bg-light d-flex align-items-center vh-100">
+       
+        
     </body>
 </html>

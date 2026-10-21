@@ -4,6 +4,7 @@
  */
 package Controller;
 
+import dao.UserDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -11,78 +12,96 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import model.User;
 
 /**
  *
- * @author Lâm Trung Hậu (TV1)
+ * @author Lâm Trung Hậu
  */
-@WebServlet(name = "AuthController", urlPatterns = {"/auth"})
+@WebServlet(name = "AuthController", urlPatterns = {"/llogin", "/register", "/logout"})
 public class AuthController extends HttpServlet {
-
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet AuthController</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet AuthController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+    private UserDAO userDao = new UserDAO();
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+            
+        String path = request.getServletPath();
+        
+        if ("/login".equals(path)) {
+            request.getRequestDispatcher("WEB-INF/auth/login.jsp").forward(request, response);
+        } else if ("/logout".equals(path)) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            response.sendRedirect(request.getContextPath() + "/login?msg=logged_out");
+        }
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        String path = request.getServletPath();
+        
+        
+        if ("/login".equals(path)) {
+            String u = request.getParameter("username");
+            String p = request.getParameter("password");
+            
+            User user = userDao.checkLogin(u, p);
+            
+            if (user != null) {
+                if ("Bị khóa".equalsIgnoreCase(user.getStatus())) {
+                    request.setAttribute("errorMessage", "Tài khoản của bạn đã bị khóa do vi phạm đặt vé!");
+                    request.getRequestDispatcher("/WEB-INF/auth/login.jsp").forward(request, response);
+                    return;
+                }
+                HttpSession session = request.getSession();
+                session.setAttribute("currentUser", user);
+                
+                if (user.isAdmin()) {
+                    response.sendRedirect(request.getContextPath() + "/admin/location");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "login?msg=welcome");
+                }
+                
+            } else {
+                request.setAttribute("errorMessage", "Sai tên đăng nhập hoặc mật khẩu!");
+                request.setAttribute("username", u);
+                request.getRequestDispatcher("/WEB-INF/auth/login.jsp").forward(request, response);
+                
+            }
+        } else if ("/register".equals(path)) {
+            String u = request.getParameter("username");
+            String p = request.getParameter("password");
+            String confirmP = request.getParameter("confirmPassword");
+            String name = request.getParameter("fullName");
+            String phone = request.getParameter("phone");
+            String email = request.getParameter("email");
+            
+            if (!p.equals(confirmP)) {
+                request.setAttribute("errprMessage", "Mật khẩu xác nhận không khớp");
+                request.getRequestDispatcher("/WEB-INF/auth/register.jsp").forward(request, response);
+                return;
+            }
+            
+            if (userDao.findByUsername(u) != null) {
+                request.setAttribute("errorMessage", "Tên đăng nhập này đã có người sử dụng!");
+                request.getRequestDispatcher("/WEB-INF/auth/register.jsp").forward(request, response);
+                return;
+            }
+            
+            User newUser = new User(0, u, p, "user", name, email, phone, "Hoạt động", null);
+            if (userDao.insert(newUser)) {
+                request.setAttribute("successMessage", "Đăng ký thành công! Vui long đăng nhập.");
+                request.getRequestDispatcher("/WEB-INF/auth/login.jsp").forward(request, response);
+            } else {
+                request.setAttribute("errorMessage", "Đăng ký thất bại!");
+                request.getRequestDispatcher("/WEB-INF/auth/register.jsp").forward(request, response);
+            }
+        }
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
 
 }
 
