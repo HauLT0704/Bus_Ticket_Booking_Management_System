@@ -5,6 +5,8 @@
 package dao;
 
 import db.DBContext;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,17 +28,34 @@ public class UserDAO extends DBContext {
 
             PreparedStatement ps = getConnection().prepareStatement(sql);
             ps.setString(1, username);
-            ps.setString(2, password);
+            ps.setString(2, hashMd5(password));
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return new User(rs.getInt("Id"), rs.getString("Username"), rs.getString("Password"), rs.getString("Role"), rs.getString("FullName"), rs.getString("Email"), rs.getString("Phone"), rs.getString("Status"), rs.getTimestamp("CreatedAt"));
 
-            };
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private String hashMd5(String raw) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] mess = md.digest(raw.getBytes());
+
+            StringBuilder sb = new StringBuilder();
+            for (byte b : mess) {
+                sb.append(String.format("%02x", b));
+            }
+
+            return sb.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, ex);
+            return "";
+        }
     }
 
     public User findByUsername(String username) {
@@ -64,7 +83,7 @@ public class UserDAO extends DBContext {
         try {
             PreparedStatement ps = getConnection().prepareStatement(sql);
             ps.setString(1, u.getUsername());
-            ps.setString(2, u.getPassword());
+            ps.setString(2, hashMd5(u.getPassword()));
             ps.setString(3, u.getRole() != null ? u.getRole() : "user");
             ps.setString(4, u.getFullName());
             ps.setString(5, u.getEmail());

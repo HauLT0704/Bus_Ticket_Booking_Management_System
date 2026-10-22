@@ -19,7 +19,7 @@ import model.User;
  *
  * @author Lâm Trung Hậu
  */
-@WebServlet(name = "AuthController", urlPatterns = {"/llogin", "/register", "/logout"})
+@WebServlet(name = "AuthController", urlPatterns = {"/login", "/register", "/logout"})
 public class AuthController extends HttpServlet {
     private UserDAO userDao = new UserDAO();
     @Override
@@ -29,9 +29,11 @@ public class AuthController extends HttpServlet {
         String path = request.getServletPath();
         
         if ("/login".equals(path)) {
-            request.getRequestDispatcher("WEB-INF/auth/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/auth/login.jsp").forward(request, response);
+        } else if ("/register".equals(path)) {
+           request.getRequestDispatcher("/WEB-INF/auth/register.jsp").forward(request, response);
         } else if ("/logout".equals(path)) {
-            HttpSession session = request.getSession(false);
+            HttpSession session = request.getSession();
             if (session != null) {
                 session.invalidate();
             }
@@ -63,7 +65,7 @@ public class AuthController extends HttpServlet {
                 if (user.isAdmin()) {
                     response.sendRedirect(request.getContextPath() + "/admin/location");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "login?msg=welcome");
+                    response.sendRedirect(request.getContextPath() + "/home");
                 }
                 
             } else {
@@ -81,7 +83,7 @@ public class AuthController extends HttpServlet {
             String email = request.getParameter("email");
             
             if (!p.equals(confirmP)) {
-                request.setAttribute("errprMessage", "Mật khẩu xác nhận không khớp");
+                request.setAttribute("errorMessage", "Mật khẩu xác nhận không khớp");
                 request.getRequestDispatcher("/WEB-INF/auth/register.jsp").forward(request, response);
                 return;
             }
