@@ -4,6 +4,7 @@
  */
 package Controller;
 
+import dao.LocationDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -11,78 +12,73 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.util.List;
+import model.Location;
+import model.User;
 
 /**
  *
- * @author Lâm Trung Hậu (TV1)
+ * @author Lâm Trung Hậu
  */
-@WebServlet(name = "LocationController", urlPatterns = {"/location"})
+@WebServlet(name = "LocationController", urlPatterns = {"/admin/location"})
 public class LocationController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet LocationController</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet LocationController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        HttpSession session = request.getSession(false);
+        if (session==null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !currentUser.isAdmin()) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        
+        LocationDAO locationDAO = new LocationDAO();
+        String action = request.getParameter("action");
+        
+        if (action == null || action.equals("list")) {
+            List<Location> list = locationDAO.getAll();
+            request.setAttribute("locationList", list);
+            request.getRequestDispatcher("/WEB-INF/admin/location-list.jsp").forward(request, response);
+        } else if (action.equals("edit")) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            Location loc = locationDAO.getById(id);
+            request.setAttribute("location", loc);
+            request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+        } else if (action.equals("add")) {
+            request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+        } else if (action.equals("delete")) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            locationDAO.delete(id);
+            response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
+        }
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        request.setCharacterEncoding("UTF-8");
+        LocationDAO locationDAO = new LocationDAO();
+        
+        String action = request.getParameter("action");
+        String name = request.getParameter("name");
+        String province = request.getParameter("province");
+        
+        if ("insert".equals(action)) {
+            Location loc = new Location(name, province);
+            locationDAO.insert(loc);
+            response.sendRedirect(request.getContextPath() + "/admin/location?msg=added");
+        } else if ("update".equals(action)) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            Location loc = new Location(id, name, province);
+            locationDAO.update(loc);
+            response.sendRedirect(request.getContextPath() + "/admin/location?msg=updated");
+        }
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }
-
