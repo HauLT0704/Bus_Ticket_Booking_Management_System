@@ -4,65 +4,72 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>${vehicle != null ? "Cập Nhật Xe Khách" : "Thêm Xe Mới"}</title>
+    <title>${vehicle != null ? "Cập Nhật Xe Khách" : "Thêm Xe Mới"} - BUS BOOKING</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 40px 20px; }
-        .card { max-width: 550px; margin: auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { color: #2c3e50; text-align: center; margin-top: 0; margin-bottom: 25px; font-size: 22px; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; font-weight: 600; color: #495057; margin-bottom: 6px; font-size: 14px; }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s; }
-        input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: #0d6efd; outline: none; }
-        .btn-group { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
-        .btn-submit { background-color: #0d6efd; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; transition: background-color 0.2s; }
-        .btn-submit:hover { background-color: #0b5ed7; }
-        .btn-back { background-color: #6c757d; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background-color 0.2s; }
-        .btn-back:hover { background-color: #5c636a; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-custom { border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: white; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>${vehicle != null ? "Cập Nhật Thông Tin Xe" : "Thêm Xe Khách Mới"}</h2>
-        
-        <form action="vehicle" method="POST">
-            <input type="hidden" name="action" value="${vehicle != null ? 'update' : 'insert'}">
-            <c:if test="${vehicle != null}">
-                <input type="hidden" name="id" value="${vehicle.id}">
-            </c:if>
 
-            <div class="form-group">
-                <label>Biển Số Xe:</label>
-                <input type="text" name="licensePlate" value="${vehicle != null ? vehicle.licensePlate : ''}" required placeholder="Ví dụ: 51B-123.45">
-            </div>
+    <!-- 1. Nhúng Header dùng chung -->
+    <jsp:include page="../common/header.jsp" />
 
-            <div class="form-group">
-                <label>Số Ghế:</label>
-                <input type="number" name="totalSeats" value="${vehicle != null ? vehicle.totalSeats : '40'}" required>
-            </div>
+    <!-- 2. Phần Form Nội Dung Chính -->
+    <div class="container my-5" style="max-width: 650px;">
+        <div class="card card-custom p-4 p-md-5">
+            <h3 class="fw-bold text-dark mb-4 text-center">
+                ${vehicle != null ? "Cập Nhật Thông Tin Xe" : "Thêm Xe Khách Mới"}
+            </h3>
+            
+            <form action="vehicle" method="POST">
+                <input type="hidden" name="action" value="${vehicle != null ? 'update' : 'insert'}">
+                <c:if test="${vehicle != null}">
+                    <input type="hidden" name="id" value="${vehicle.id}">
+                </c:if>
 
-            <div class="form-group">
-                <label>Loại Xe:</label>
-                <select name="type">
-                    <option value="Giường nằm" ${vehicle != null && vehicle.type == 'Giường nằm' ? 'selected' : ''}>Giường nằm</option>
-                    <option value="Limousine VIP" ${vehicle != null && vehicle.type == 'Limousine VIP' ? 'selected' : ''}>Limousine VIP</option>
-                    <option value="Ghế ngồi" ${vehicle != null && vehicle.type == 'Ghế ngồi' ? 'selected' : ''}>Ghế ngồi</option>
-                </select>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Biển Số Xe:</label>
+                    <input type="text" class="form-control py-2" name="licensePlate" value="${vehicle != null ? vehicle.licensePlate : ''}" required placeholder="Ví dụ: 51B-123.45">
+                </div>
 
-            <div class="form-group">
-                <label>Trạng Thái:</label>
-                <select name="status">
-                    <option value="Hoạt động" ${vehicle != null && vehicle.status == 'Hoạt động' ? 'selected' : ''}>Hoạt động</option>
-                    <option value="Bảo dưỡng" ${vehicle != null && vehicle.status == 'Bảo dưỡng' ? 'selected' : ''}>Bảo dưỡng</option>
-                    <option value="Tạm ngưng" ${vehicle != null && vehicle.status == 'Tạm ngưng' ? 'selected' : ''}>Tạm ngưng</option>
-                </select>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số Ghế:</label>
+                    <input type="number" class="form-control py-2" name="totalSeats" value="${vehicle != null ? vehicle.totalSeats : '40'}" required>
+                </div>
 
-            <div class="btn-group">
-                <a href="vehicle" class="btn-back">Quay lại</a>
-                <button type="submit" class="btn-submit">Lưu Thông Tin</button>
-            </div>
-        </form>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Loại Xe:</label>
+                    <select name="type" class="form-select py-2">
+                        <option value="Giường nằm" ${vehicle != null && vehicle.type == 'Giường nằm' ? 'selected' : ''}>Giường nằm</option>
+                        <option value="Limousine VIP" ${vehicle != null && vehicle.type == 'Limousine VIP' ? 'selected' : ''}>Limousine VIP</option>
+                        <option value="Ghế ngồi" ${vehicle != null && vehicle.type == 'Ghế ngồi' ? 'selected' : ''}>Ghế ngồi</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Trạng Thái:</label>
+                    <select name="status" class="form-select py-2">
+                        <option value="Hoạt động" ${vehicle != null && vehicle.status == 'Hoạt động' ? 'selected' : ''}>Hoạt động</option>
+                        <option value="Bảo dưỡng" ${vehicle != null && vehicle.status == 'Bảo dưỡng' ? 'selected' : ''}>Bảo dưỡng</option>
+                        <option value="Tạm ngưng" ${vehicle != null && vehicle.status == 'Tạm ngưng' ? 'selected' : ''}>Tạm ngưng</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="vehicle" class="btn btn-secondary px-4 py-2">Quay lại</a>
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">Lưu Thông Tin</button>
+                </div>
+            </form>
+        </div>
     </div>
+
+    <!-- 3. Nhúng Footer dùng chung -->
+    <jsp:include page="../common/footer.jsp" />
+
 </body>
 </html>

@@ -4,57 +4,64 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>${customer != null ? "Cập Nhật Khách Hàng" : "Thêm Khách Hàng Mới"}</title>
+    <title>${customer != null ? "Cập Nhật Khách Hàng" : "Thêm Khách Hàng Mới"} - BUS BOOKING</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 40px 20px; }
-        .card { max-width: 550px; margin: auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { color: #2c3e50; text-align: center; margin-top: 0; margin-bottom: 25px; font-size: 22px; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; font-weight: 600; color: #495057; margin-bottom: 6px; font-size: 14px; }
-        input[type="text"], input[type="email"] { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s; }
-        input[type="text"]:focus, input[type="email"]:focus { border-color: #0d6efd; outline: none; }
-        .btn-group { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
-        .btn-submit { background-color: #0d6efd; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; transition: background-color 0.2s; }
-        .btn-submit:hover { background-color: #0b5ed7; }
-        .btn-back { background-color: #6c757d; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background-color 0.2s; }
-        .btn-back:hover { background-color: #5c636a; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-custom { border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: white; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>${customer != null ? "Cập Nhật Thông Tin Khách Hàng" : "Thêm Khách Hàng Mới"}</h2>
-        
-        <form action="customer" method="POST">
-            <input type="hidden" name="action" value="${customer != null ? 'update' : 'insert'}">
-            <c:if test="${customer != null}">
-                <input type="hidden" name="id" value="${customer.id}">
-            </c:if>
 
-            <div class="form-group">
-                <label>Họ và Tên:</label>
-                <input type="text" name="fullName" value="${customer != null ? customer.fullName : ''}" required placeholder="Nhập họ và tên...">
-            </div>
+    <!-- Nhúng Header từ thư mục common -->
+    <jsp:include page="../common/header.jsp" />
 
-            <div class="form-group">
-                <label>Số Điện Thoại:</label>
-                <input type="text" name="phone" value="${customer != null ? customer.phone : ''}" required placeholder="Nhập số điện thoại...">
-            </div>
+    <!-- Phần Form Nội Dung Chính -->
+    <div class="container my-5" style="max-width: 650px;">
+        <div class="card card-custom p-4 p-md-5">
+            <h3 class="fw-bold text-dark mb-4 text-center">
+                ${customer != null ? "Cập Nhật Thông Tin Khách Hàng" : "Thêm Khách Hàng Mới"}
+            </h3>
+            
+            <form action="customer" method="POST">
+                <input type="hidden" name="action" value="${customer != null ? 'update' : 'insert'}">
+                <c:if test="${customer != null}">
+                    <input type="hidden" name="id" value="${customer.id}">
+                </c:if>
 
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" value="${customer != null ? customer.email : ''}" placeholder="Nhập địa chỉ email...">
-            </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Họ và Tên:</label>
+                    <input type="text" class="form-control py-2" name="fullName" value="${customer != null ? customer.fullName : ''}" required placeholder="Nhập họ và tên...">
+                </div>
 
-            <div class="form-group">
-                <label>CCCD / ID Card:</label>
-                <input type="text" name="idCard" value="${customer != null ? customer.idCard : ''}" placeholder="Nhập số CCCD/CMND...">
-            </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Số Điện Thoại:</label>
+                    <input type="text" class="form-control py-2" name="phone" value="${customer != null ? customer.phone : ''}" required placeholder="Nhập số điện thoại...">
+                </div>
 
-            <div class="btn-group">
-                <a href="customer" class="btn-back">Quay lại</a>
-                <button type="submit" class="btn-submit">Lưu Thông Tin</button>
-            </div>
-        </form>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email:</label>
+                    <input type="email" class="form-control py-2" name="email" value="${customer != null ? customer.email : ''}" placeholder="Nhập địa chỉ email...">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">CCCD / ID Card:</label>
+                    <input type="text" class="form-control py-2" name="idCard" value="${customer != null ? customer.idCard : ''}" placeholder="Nhập số CCCD/CMND...">
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="customer" class="btn btn-secondary px-4 py-2">Quay lại</a>
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">Lưu Thông Tin</button>
+                </div>
+            </form>
+        </div>
     </div>
+
+    <!-- Nhúng Footer từ thư mục common -->
+    <jsp:include page="../common/footer.jsp" />
+
 </body>
 </html>

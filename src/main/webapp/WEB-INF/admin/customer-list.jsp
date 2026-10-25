@@ -4,95 +4,82 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản Lý Khách Hàng - Hệ Thống Bến Xe</title>
+    <title>Quản Lý Khách Hàng - BUS BOOKING</title>
+    <!-- Sử dụng Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        :root {
-            --sidebar-width: 250px;
-            --primary-color: #1e293b;
-            --accent-color: #2563eb;
-            --bg-color: #f8fafc;
+        /* Cấu hình Flexbox để ép footer luôn xuống sát đáy màn hình */
+        html, body {
+            height: 100%;
+            margin: 0;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; display: flex; }
-        
-        /* Sidebar */
-        .sidebar { width: var(--sidebar-width); background-color: var(--primary-color); color: white; height: 100vh; position: fixed; padding: 20px; box-sizing: border-box; }
-        .sidebar h2 { font-size: 18px; color: #38bdf8; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
-        .sidebar a { display: block; color: #94a3b8; text-decoration: none; padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; font-weight: 500; transition: 0.2s; }
-        .sidebar a:hover, .sidebar a.active { background-color: var(--accent-color); color: white; }
-        
-        /* Main Content */
-        .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 30px; box-sizing: border-box; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 25px; }
-        .header-bar h2 { margin: 0; color: #1e293b; font-size: 22px; }
-        
-        /* Table & Card */
-        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .btn-add { background-color: var(--accent-color); color: white; padding: 10px 16px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; }
-        .btn-add:hover { background-color: #1d4ed8; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        th { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
-        tr:hover { background-color: #f8fafc; }
-        
-        .action-links a { text-decoration: none; font-weight: 600; margin-right: 12px; font-size: 14px; }
-        .action-edit { color: #d97706; }
-        .action-edit:hover { color: #b45309; }
-        .action-delete { color: #dc2626; }
-        .action-delete:hover { color: #b91c1c; }
+        body {
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container.my-4 {
+            flex: 1; /* Giúp phần nội dung giãn nở, đẩy footer xuống */
+        }
+
+        .table-dark-custom { background-color: #212529; color: white; }
+        .card-custom { border: none; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); background: white; }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar hệ thống bến xe -->
-    <div class="sidebar">
-        <h2>GooXe Management</h2>
-        <a href="customer" class="active">Quản Lý Khách Hàng</a>
-        <a href="vehicle">Quản Lý Xe Khách</a>
-    </div>
+    <!-- Nhúng Header từ thư mục common -->
+    <jsp:include page="../common/header.jsp" />
 
-    <!-- Nội dung chính -->
-    <div class="main-content">
-        <div class="header-bar">
-            <h2>Quản Lý Khách Hàng</h2>
-            <span style="color: #64748b; font-weight: 500;">Xin chào, TV3 (Phan Thanh Tú)</span>
-        </div>
-
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0; font-size: 16px; color: #334155;">Danh sách khách hàng trên hệ thống</h3>
-                <a href="customer?action=add" class="btn-add">+ Thêm Khách Hàng Mới</a>
+    <!-- Nội dung chính (Danh sách Khách Hàng) -->
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Quản Lý Khách Hàng</h3>
+                <p class="text-muted mb-0" style="font-size: 14px;">Xem và quản lý thông tin khách hàng trong hệ thống</p>
             </div>
+            <a href="customer?action=add" class="btn btn-primary fw-semibold px-3 py-2">+ Thêm Khách Hàng Mới</a>
+        </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Họ và Tên</th>
-                        <th>Số Điện Thoại</th>
-                        <th>Email</th>
-                        <th>CCCD / ID Card</th>
-                        <th>Thao Tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach var="c" items="${customerList}">
-                        <tr>
-                            <td>${c.id}</td>
-                            <td><strong>${c.fullName}</strong></td>
-                            <td>${c.phone}</td>
-                            <td>${c.email}</td>
-                            <td>${c.idCard}</td>
-                            <td class="action-links">
-                                <a href="customer?action=edit&id=${c.id}" class="action-edit">Sửa</a>
-                                <a href="customer?action=delete&id=${c.id}" class="action-delete" onclick="return confirm('Bạn có chắc muốn xóa khách hàng này?');">Xóa</a>
-                            </td>
+        <div class="card card-custom p-4">
+            <h5 class="fw-bold mb-3 text-secondary">Danh sách khách hàng</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr class="table-dark-custom">
+                            <th class="py-3 ps-3">ID</th>
+                            <th class="py-3">Họ và Tên</th>
+                            <th class="py-3">Số Điện Thoại</th>
+                            <th class="py-3">Email</th>
+                            <th class="py-3">CCCD / ID Card</th>
+                            <th class="py-3 text-center">Hành động</th>
                         </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <c:forEach var="c" items="${customerList}">
+                            <tr>
+                                <td class="ps-3">${c.id}</td>
+                                <td class="fw-semibold">${c.fullName}</td>
+                                <td>${c.phone}</td>
+                                <td>${c.email}</td>
+                                <td>${c.idCard}</td>
+                                <td class="text-center">
+                                    <a href="customer?action=edit&id=${c.id}" class="btn btn-sm btn-primary px-3">Sửa</a>
+                                    <a href="customer?action=delete&id=${c.id}" class="btn btn-sm btn-danger px-3" onclick="return confirm('Bạn có chắc muốn xóa khách hàng này?');">Xóa</a>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <!-- Nhúng Footer từ thư mục common -->
+    <jsp:include page="../common/footer.jsp" />
 
 </body>
 </html>
