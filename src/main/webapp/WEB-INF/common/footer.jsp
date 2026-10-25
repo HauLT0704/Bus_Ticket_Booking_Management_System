@@ -1,48 +1,54 @@
 
 <%@page pageEncoding="UTF-8"%>
-<footer class="bg-primary text-white mt-5 py-5">
+
+<footer class="bg-primary text-white mt-5 py-5 shadow-sm">
     <div class="container">
         <div class="row align-items-center text-center text-md-start gy-4">
 
-            <!-- Thông tin hệ thống -->
+            <!-- System Information -->
             <div class="col-md-5">
                 <h4 class="fw-bold mb-3">
                     <i class="bi bi-bus-front-fill me-2"></i>
                     BUS BOOKING
                 </h4>
-                <p class="mb-0">
-                    Nền tảng đặt vé xe khách nhanh chóng,
-                    tiện lợi và an toàn.
+
+                <p class="mb-0 text-white-50">
+                    A fast, convenient, and secure online
+                    bus ticket booking platform.
                 </p>
             </div>
 
-            <!-- Liên kết -->
+            <!-- Quick Links -->
             <div class="col-md-4">
-                <h5 class="fw-bold mb-3">Liên kết nhanh</h5>
+                <h5 class="fw-bold mb-3">Quick Links</h5>
 
                 <div class="d-flex flex-column gap-2">
-                    <a href="<%=request.getContextPath()%>/home"
+                    <a href="${pageContext.request.contextPath}/home"
                        class="text-white text-decoration-none">
-                        Trang chủ
+                        <i class="bi bi-house-door me-2"></i>
+                        Home
                     </a>
 
-                    <a href="<%=request.getContextPath()%>/search"
+                    <a href="${pageContext.request.contextPath}/search"
                        class="text-white text-decoration-none">
-                        Tìm chuyến xe
+                        <i class="bi bi-search me-2"></i>
+                        Search Tickets
                     </a>
                 </div>
             </div>
 
-            <!-- Giới thiệu -->
+            <!-- About Us -->
             <div class="col-md-3">
-                <h5 class="fw-bold mb-3">Về chúng tôi</h5>
+                <h5 class="fw-bold mb-3">About Us</h5>
+
                 <p class="mb-2">
                     <i class="bi bi-geo-alt-fill me-2"></i>
-                    Việt Nam
+                    Vietnam
                 </p>
+
                 <p class="mb-0">
                     <i class="bi bi-ticket-perforated-fill me-2"></i>
-                    Đặt vé trực tuyến
+                    Online Ticket Booking
                 </p>
             </div>
 
@@ -52,14 +58,16 @@
 
         <!-- Copyright -->
         <div class="text-center">
-            <p class="mb-0 small">
+            <p class="mb-0 small text-white-50">
                 &copy; 2026 Bus Ticket Booking System
-                | Nhóm Bus Ticket Booking
+                | Bus Ticket Booking Team
             </p>
         </div>
     </div>
 </footer>
 
+<!-- Bootstrap 5 JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
