@@ -19,6 +19,8 @@ import model.User;
  * @author Lâm Trung Hậu (TV1)
  */
 public class UserDAO extends DBContext {
+    
+    
 
     public User checkLogin(String username, String password) {
         String sql = "SELECT Id, Username, Password, Role, FullName, Email, Phone, Status, CreatedAt \n"
@@ -29,6 +31,8 @@ public class UserDAO extends DBContext {
             PreparedStatement ps = getConnection().prepareStatement(sql);
             ps.setString(1, username);
             ps.setString(2, hashMd5(password));
+            
+            
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {

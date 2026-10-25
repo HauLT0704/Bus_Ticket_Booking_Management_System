@@ -13,7 +13,7 @@ public class DBContext {
     private Connection conn;
     private final String DB_URL = "jdbc:sqlserver://127.0.0.1:1433;databaseName=BusTicketDB;encrypt=false;trustServerCertificate=true";
     private final String DB_USER = "sa";
-    private final String DB_PWD = "123456";
+    private final String DB_PWD = "123";
 
     public DBContext() {
         try {
@@ -35,5 +35,7 @@ public class DBContext {
         }
         return conn;
     }
+     
+    
 }
 
