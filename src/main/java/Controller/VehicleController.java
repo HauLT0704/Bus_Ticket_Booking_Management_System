@@ -1,11 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controller;
 
+import dao.VehicleDAO;
+import model.Vehicle;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,76 +11,88 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- *
  * @author Phan Thanh Tu (TV3)
  */
 @WebServlet(name = "VehicleController", urlPatterns = {"/vehicle"})
 public class VehicleController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet VehicleController</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet VehicleController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
+    private VehicleDAO vehicleDAO = new VehicleDAO();
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        String action = request.getParameter("action");
+        if (action == null) {
+            action = "list";
+        }
+
+        switch (action) {
+            case "add":
+                // Mở trang form để điền thông tin thêm xe mới
+                request.getRequestDispatcher("/WEB-INF/admin/vehicle-form.jsp").forward(request, response);
+                break;
+
+            case "edit":
+                // Lấy ID xe cần sửa và mở form điền thông tin cũ
+                int idToEdit = Integer.parseInt(request.getParameter("id"));
+                Vehicle existingVehicle = vehicleDAO.getVehicleById(idToEdit);
+                request.setAttribute("vehicle", existingVehicle);
+                request.getRequestDispatcher("/WEB-INF/admin/vehicle-form.jsp").forward(request, response);
+                break;
+
+            case "delete":
+                // Xóa xe theo ID rồi quay lại trang danh sách xe
+                int idToDelete = Integer.parseInt(request.getParameter("id"));
+                vehicleDAO.deleteVehicle(idToDelete);
+                response.sendRedirect("vehicle");
+                break;
+
+            default:
+                // Hiển thị danh sách xe khách
+                listVehicles(request, response);
+                break;
+        }
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        String action = request.getParameter("action");
+        if ("insert".equals(action)) {
+            // Lấy dữ liệu từ form thêm xe mới
+            String licensePlate = request.getParameter("licensePlate");
+            int totalSeats = Integer.parseInt(request.getParameter("totalSeats"));
+            String type = request.getParameter("type");
+            String status = request.getParameter("status");
+
+            Vehicle v = new Vehicle(0, licensePlate, totalSeats, type, status);
+            vehicleDAO.insertVehicle(v);
+            response.sendRedirect("vehicle");
+
+        } else if ("update".equals(action)) {
+            // Lấy dữ liệu từ form cập nhật xe
+            int id = Integer.parseInt(request.getParameter("id"));
+            String licensePlate = request.getParameter("licensePlate");
+            int totalSeats = Integer.parseInt(request.getParameter("totalSeats"));
+            String type = request.getParameter("type");
+            String status = request.getParameter("status");
+
+            Vehicle v = new Vehicle(id, licensePlate, totalSeats, type, status);
+            vehicleDAO.updateVehicle(v);
+            response.sendRedirect("vehicle");
+        }
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+    private void listVehicles(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        List<Vehicle> list = vehicleDAO.getAllVehicles();
+        request.setAttribute("vehicleList", list);
+        request.getRequestDispatcher("/WEB-INF/admin/vehicle-list.jsp").forward(request, response);
+    }
 }
-
