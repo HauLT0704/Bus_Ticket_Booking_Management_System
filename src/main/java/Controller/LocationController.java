@@ -1,12 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controller;
 
 import dao.LocationDAO;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -18,8 +13,7 @@ import model.Location;
 import model.User;
 
 /**
- *
- * @author Lâm Trung Hậu
+ * @author Lâm Trung Hậu (TV1)
  */
 @WebServlet(name = "LocationController", urlPatterns = {"/admin/location"})
 public class LocationController extends HttpServlet {
@@ -28,7 +22,7 @@ public class LocationController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session==null) {
+        if (session == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
@@ -68,15 +62,14 @@ public class LocationController extends HttpServlet {
         
         String action = request.getParameter("action");
         String name = request.getParameter("name");
-        String province = request.getParameter("province");
         
         if ("insert".equals(action)) {
-            Location loc = new Location(name, province);
+            Location loc = new Location(name);
             locationDAO.insert(loc);
             response.sendRedirect(request.getContextPath() + "/admin/location?msg=added");
         } else if ("update".equals(action)) {
             int id = Integer.parseInt(request.getParameter("id"));
-            Location loc = new Location(id, name, province);
+            Location loc = new Location(id, name);
             locationDAO.update(loc);
             response.sendRedirect(request.getContextPath() + "/admin/location?msg=updated");
         }

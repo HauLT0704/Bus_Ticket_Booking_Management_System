@@ -1,11 +1,11 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Địa điểm - Bus Booking System</title>
+    <title>Quản lý Tỉnh / Thành Phố - Bus Booking System</title>
     <!-- Bootstrap 5.3 & Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -32,22 +32,22 @@
     <!-- CONTAINER CHÍNH -->
     <div class="container pb-5">
 
-        <!-- THÔNG BÁO FEEDBACK (Tự biến mất khi nhấn dấu X) -->
+        <!-- THÔNG BÁO TỰ ĐỘNG -->
         <c:if test="${param.msg == 'added'}">
             <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i> <strong>Thành công!</strong> Đã thêm địa điểm mới vào hệ thống.
+                <i class="bi bi-check-circle-fill me-2"></i> <strong>Thành công!</strong> Đã thêm tỉnh/thành phố mới vào hệ thống.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         <c:if test="${param.msg == 'updated'}">
             <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-info-circle-fill me-2"></i> <strong>Thành công!</strong> Đã cập nhật thông tin địa điểm.
+                <i class="bi bi-info-circle-fill me-2"></i> <strong>Thành công!</strong> Đã cập nhật tên tỉnh/thành phố.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         <c:if test="${param.msg == 'deleted'}">
             <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-trash-fill me-2"></i> Đã xóa địa điểm thành công.
+                <i class="bi bi-trash-fill me-2"></i> Đã xóa tỉnh/thành phố thành công.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
@@ -56,12 +56,12 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h4 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>Danh Mục Địa Điểm
+                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>Danh Mục Tỉnh / Thành Phố
                 </h4>
-                <small class="text-secondary">Quản lý bến xe và trạm trung chuyển các tỉnh thành</small>
+                <small class="text-secondary">Quản lý danh sách các tỉnh thành phục vụ tuyến xe Miền Tây</small>
             </div>
             <a href="${pageContext.request.contextPath}/admin/location?action=add" class="btn btn-primary fw-bold shadow-sm">
-                <i class="bi bi-plus-circle me-1"></i> Thêm Địa Điểm Mới
+                <i class="bi bi-plus-circle me-1"></i> Thêm Tỉnh / Thành Mới
             </a>
         </div>
 
@@ -71,9 +71,8 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light text-secondary border-bottom">
                         <tr>
-                            <th class="text-center py-3" style="width: 80px;">MÃ</th>
-                            <th class="py-3">TÊN BẾN XE / TRẠM DỪNG</th>
-                            <th class="py-3">TỈNH / THÀNH PHỐ</th>
+                            <th class="text-center py-3" style="width: 90px;">MÃ</th>
+                            <th class="py-3">TÊN TỈNH / THÀNH PHỐ</th>
                             <th class="py-3">NGÀY TẠO</th>
                             <th class="text-center py-3" style="width: 140px;">HÀNH ĐỘNG</th>
                         </tr>
@@ -82,10 +81,9 @@
                         <c:forEach var="loc" items="${locationList}">
                             <tr>
                                 <td class="text-center fw-bold text-muted">#${loc.id}</td>
-                                <td class="fw-semibold text-dark">${loc.name}</td>
                                 <td>
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
-                                        <i class="bi bi-pin-map-fill me-1"></i> ${loc.province}
+                                    <span class="fw-semibold text-dark fs-6">
+                                        <i class="bi bi-pin-map-fill text-primary me-2"></i>${loc.name}
                                     </span>
                                 </td>
                                 <td class="text-secondary small">${loc.createdAt}</td>
@@ -107,9 +105,9 @@
 
                         <c:if test="${empty locationList}">
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="4" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
-                                    Chưa có địa điểm nào trong hệ thống!
+                                    Chưa có tỉnh/thành phố nào trong hệ thống!
                                 </td>
                             </tr>
                         </c:if>
