@@ -79,10 +79,32 @@ public class LocationDAO extends DBContext {
         return false;
     }
 
-    // 5. Xóa tỉnh thành
+    // 5. Xóa tỉnh thành (xóa sạch ràng buộc chuyến và tuyến liên quan để không bị lỗi khóa ngoại)
     public boolean delete(int id) {
-        String sql = "DELETE FROM Locations WHERE Id = ?";
         try {
+            // Xóa vé của các chuyến thuộc tuyến này
+            String delTickets = "DELETE FROM Tickets WHERE TripId IN (SELECT Id FROM Trips WHERE RouteId IN (SELECT Id FROM Routes WHERE FromLocationId = ? OR ToLocationId = ?))";
+            PreparedStatement ps1 = getConnection().prepareStatement(delTickets);
+            ps1.setInt(1, id);
+            ps1.setInt(2, id);
+            ps1.executeUpdate();
+
+            // Xóa chuyến thuộc các tuyến này
+            String delTrips = "DELETE FROM Trips WHERE RouteId IN (SELECT Id FROM Routes WHERE FromLocationId = ? OR ToLocationId = ?)";
+            PreparedStatement ps2 = getConnection().prepareStatement(delTrips);
+            ps2.setInt(1, id);
+            ps2.setInt(2, id);
+            ps2.executeUpdate();
+
+            // Xóa tuyến đường liên quan
+            String delRoutes = "DELETE FROM Routes WHERE FromLocationId = ? OR ToLocationId = ?";
+            PreparedStatement ps3 = getConnection().prepareStatement(delRoutes);
+            ps3.setInt(1, id);
+            ps3.setInt(2, id);
+            ps3.executeUpdate();
+
+            // Cuối cùng xóa địa điểm
+            String sql = "DELETE FROM Locations WHERE Id = ?";
             PreparedStatement ps = getConnection().prepareStatement(sql);
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
