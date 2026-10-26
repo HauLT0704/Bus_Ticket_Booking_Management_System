@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.Location;
 import model.Route;
 import model.Trip;
 import model.Vehicle;
@@ -132,42 +133,68 @@ public class TripDAO extends DBContext {
         return null;
     }
 
-//    public List<Trip> searchTrips(int fromLocationId, int toLocationId, String date, int guests) {
-//        List<Trip> result = new ArrayList<>();
-//        try {
-//            String sql = "SELECT t.*, v.LicensePlate FROM Trips t "
-//                    + "JOIN Routes r ON t.RouteId = r.Id "
-//                    + "JOIN Vehicles v ON t.VehicleId = v.Id "
-//                    + "WHERE r.FromLocationId = ? AND r.ToLocationId = ? "
-//                    + "AND CAST(t.DepartureTime AS DATE) = ? "
-//                    + "AND t.AvailableSeats >= ? AND t.Status = N'Sắp khởi hành'";
-//            PreparedStatement ps = this.getConnection().prepareStatement(sql);
-//            ps.setInt(1, fromLocationId);
-//            ps.setInt(2, toLocationId);
-//            ps.setString(3, date);
-//            ps.setInt(4, guests);
-//
-//            ResultSet rs = ps.executeQuery();
-//            while (rs.next()) {
-//                Trip trip = new Trip();
-//                trip.setId(rs.getInt("Id"));
-//                trip.setRouteId(rs.getInt("RouteId"));
-//                trip.setVehicleId(rs.getInt("VehicleId"));
-//                trip.setDepartureTime(rs.getTimestamp("DepartureTime"));
-//                trip.setArrivalTime(rs.getTimestamp("ArrivalTime"));
-//                trip.setAvailableSeats(rs.getInt("AvailableSeats"));
-//                trip.setPrice(rs.getDouble("Price"));
-//                trip.setStatus(rs.getString("Status"));
-//                trip.setCreatedAt(rs.getTimestamp("createdAt"));
-//                trip.setVehicleLicensePlate(rs.getString("LicensePlate"));
-//
-//                result.add(trip);
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        return result;
-//    }
+// Hàm searchTrips theo mô hình đối tượng lồng nhau (cho thành viên thứ 4 gọi)
+    public List<Trip> searchTrips(int fromLocationId, int toLocationId, String date, int guests) {
+        List<Trip> result = new ArrayList<>();
+        try {
+            String sql = "SELECT t.*, v.LicensePlate, "
+                    + "r.Distance, r.Duration, "
+                    + "l1.Id AS FromId, l1.Name AS FromName, "
+                    + "l2.Id AS ToId, l2.Name AS ToName "
+                    + "FROM Trips t "
+                    + "JOIN Vehicles v ON t.VehicleId = v.Id "
+                    + "JOIN Routes r ON t.RouteId = r.Id "
+                    + "JOIN Locations l1 ON r.FromLocationId = l1.Id "
+                    + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
+                    + "WHERE r.FromLocationId = ? AND r.ToLocationId = ? "
+                    + "AND CAST(t.DepartureTime AS DATE) = ? "
+                    + "AND t.AvailableSeats >= ? AND t.Status = ?";
+
+            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+            ps.setInt(1, fromLocationId);
+            ps.setInt(2, toLocationId);
+            ps.setString(3, date);
+            ps.setInt(4, guests);
+            ps.setString(5, "Active");
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Vehicle vehicle = new Vehicle();
+                vehicle.setId(rs.getInt("VehicleId"));
+                vehicle.setLicensePlate(rs.getString("LicensePlate"));
+
+                Location fromLoc = new Location(rs.getInt("FromId"), rs.getString("FromName"));
+                Location toLoc = new Location(rs.getInt("ToId"), rs.getString("ToName"));
+
+                Route route = new Route(
+                        rs.getInt("RouteId"),
+                        rs.getDouble("Distance"),
+                        rs.getInt("Duration"),
+                        null,
+                        fromLoc,
+                        toLoc
+                );
+
+                Trip trip = new Trip(
+                        rs.getInt("Id"),
+                        rs.getTimestamp("DepartureTime"),
+                        rs.getTimestamp("ArrivalTime"),
+                        rs.getInt("AvailableSeats"),
+                        rs.getDouble("Price"),
+                        rs.getString("Status"),
+                        rs.getTimestamp("CreatedAt"),
+                        route,
+                        vehicle
+                );
+
+                result.add(trip);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
+    }
+
     //U
     public void update(Trip trip) {
         try {
