@@ -18,7 +18,11 @@ import model.Trip;
 public class TransferDAO extends DBContext {
 
     public List<TransferOption> findTransferOptions(
-            int fromId, int toId, LocalDate date) {
+            int fromId, int toId, LocalDate date, int guests) {
+
+        if (guests < 1 || guests > 10) {
+            throw new IllegalArgumentException("Invalid number of guests");
+        }
 
         List<TransferOption> options = new ArrayList<>();
 
@@ -36,31 +40,29 @@ public class TransferDAO extends DBContext {
                 + "    (t1.Price + t2.Price) AS TotalPrice,\n"
                 + "    r1.ToLocationId AS TransferLocationId\n"
                 + "FROM Trips t1\n"
-                + "INNER JOIN Routes r1\n"
-                + "    ON t1.RouteId = r1.Id\n"
-                + "INNER JOIN Routes r2\n"
-                + "    ON r1.ToLocationId = r2.FromLocationId\n"
-                + "INNER JOIN Trips t2\n"
-                + "    ON t2.RouteId = r2.Id\n"
+                + "INNER JOIN Routes r1 ON t1.RouteId = r1.Id\n"
+                + "INNER JOIN Routes r2 ON r1.ToLocationId = r2.FromLocationId\n"
+                + "INNER JOIN Trips t2 ON t2.RouteId = r2.Id\n"
                 + "WHERE r1.FromLocationId = ?\n"
                 + "  AND r2.ToLocationId = ?\n"
-                + "  AND t1.AvailableSeats > 0\n"
-                + "  AND t2.AvailableSeats > 0\n"
+                + "  AND t1.AvailableSeats >= ?\n"
+                + "  AND t2.AvailableSeats >= ?\n"
                 + "  AND DATEADD(MINUTE, 15, t1.ArrivalTime) <= t2.DepartureTime\n"
                 + "  AND DATEADD(MINUTE, 75, t1.ArrivalTime) >= t2.DepartureTime\n"
                 + "  AND t1.Status = N'Sắp khởi hành'\n"
                 + "  AND t2.Status = N'Sắp khởi hành'\n"
-                + "  AND CAST(t1.DepartureTime AS DATE) = ?";
+                + "  AND CAST(t1.DepartureTime AS DATE) = ?\n"
+                + "ORDER BY t1.DepartureTime, t2.DepartureTime";
 
-        // BEGIN: FIND TRANSFER OPTIONS
         try (PreparedStatement statement
                 = this.getConnection().prepareStatement(sql)) {
 
             statement.setInt(1, fromId);
             statement.setInt(2, toId);
-            statement.setDate(3, java.sql.Date.valueOf(date));
+            statement.setInt(3, guests);
+            statement.setInt(4, guests);
+            statement.setDate(5, java.sql.Date.valueOf(date));
 
-            // Tự động đóng ResultSet sau khi đọc xong
             try (ResultSet rs = statement.executeQuery()) {
 
                 while (rs.next()) {
@@ -73,11 +75,11 @@ public class TransferDAO extends DBContext {
                     first.setDepartureTime(rs.getTimestamp("FirstDeparture"));
                     second.setDepartureTime(rs.getTimestamp("SecondDeparture"));
 
-                    first.setAvailableSeats(rs.getInt("FirstAvailableSeats"));
-                    second.setAvailableSeats(rs.getInt("SecondAvailableSeats"));
-
                     first.setArrivalTime(rs.getTimestamp("FirstArrival"));
                     second.setArrivalTime(rs.getTimestamp("SecondArrival"));
+
+                    first.setAvailableSeats(rs.getInt("FirstAvailableSeats"));
+                    second.setAvailableSeats(rs.getInt("SecondAvailableSeats"));
 
                     first.setPrice(rs.getDouble("FirstPrice"));
                     second.setPrice(rs.getDouble("SecondPrice"));
@@ -95,9 +97,11 @@ public class TransferDAO extends DBContext {
         } catch (SQLException ex) {
             Logger.getLogger(TransferDAO.class.getName())
                     .log(Level.SEVERE, "Error finding transfer options", ex);
-            throw new IllegalStateException("Cannot find transfer options", ex);
+
+            throw new IllegalStateException(
+                    "Cannot find transfer options", ex
+            );
         }
-        // END: FIND TRANSFER OPTIONS
 
         return options;
     }

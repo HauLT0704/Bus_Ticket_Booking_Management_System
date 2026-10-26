@@ -1,88 +1,86 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controller;
 
+/**
+ * @author Châu Thành Tâm (TV6)
+ */
+import dao.TransferDAO;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import model.TransferOption;
 
-/**
- *
- * @author Châu Thành Tâm (TV6)
- */
 @WebServlet(name = "TransferController", urlPatterns = {"/transfer"})
 public class TransferController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doGet(HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet TransferController</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet TransferController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
+
+        request.setCharacterEncoding("UTF-8");
+
+        try {
+            String fromValue = request.getParameter("fromId");
+            String toValue = request.getParameter("toId");
+            String dateValue = request.getParameter("date");
+            String guestsValue = request.getParameter("guests");
+
+            if (fromValue == null || toValue == null
+                    || dateValue == null || guestsValue == null) {
+                throw new IllegalArgumentException();
+            }
+
+            int fromId = Integer.parseInt(fromValue);
+            int toId = Integer.parseInt(toValue);
+            int guests = Integer.parseInt(guestsValue);
+            LocalDate date = LocalDate.parse(dateValue);
+
+            if (fromId <= 0 || toId <= 0 || fromId == toId
+                    || guests < 1 || guests > 10
+                    || date.isBefore(LocalDate.now())) {
+
+                throw new IllegalArgumentException();
+            }
+
+            TransferDAO dao = new TransferDAO();
+
+            List<TransferOption> options
+                    = dao.findTransferOptions(
+                            fromId, toId, date, guests
+                    );
+
+            request.setAttribute("transferOptions", options);
+            request.setAttribute("fromId", fromId);
+            request.setAttribute("toId", toId);
+            request.setAttribute("selectedDate", date.toString());
+            request.setAttribute("guests", guests);
+
+            request.getRequestDispatcher(
+                    "/WEB-INF/user/transfer.jsp"
+            ).forward(request, response);
+
+        } catch (IllegalArgumentException
+                | DateTimeParseException ex) {
+
+            response.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid transfer search information"
+            );
+
+        } catch (IllegalStateException ex) {
+
+            log("Transfer search failed", ex);
+
+            response.sendError(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Unable to search transfer trips"
+            );
         }
     }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }
-

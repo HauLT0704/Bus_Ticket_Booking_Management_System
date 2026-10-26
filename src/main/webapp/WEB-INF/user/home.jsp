@@ -2,26 +2,12 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@include file="/WEB-INF/common/header.jsp" %>
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
 
     <h1 class="fw-bold mb-3">Bus Ticket Booking</h1>
     <p class="text-muted">
         Search and book bus tickets quickly and easily
     </p>
-
-    <!-- =====================================================
-         BEGIN: SEARCH FORM
-
-         TODO DATABASE (TV1):
-         Replace hardcoded locations with LocationDAO data.
-         Render location options using JSTL and EL.
-
-         TODO INTEGRATION (TV4):
-         Connect the search form to the search Controller.
-
-         Keep IDs: searchForm, from, to, date.
-         END: SEARCH FORM NOTES
-    ====================================================== -->
 
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
@@ -29,38 +15,91 @@
         </div>
 
         <div class="card-body">
-            <form id="searchForm">
+
+            <form id="searchForm" method="GET">
+
+                <div class="d-flex flex-wrap gap-4 mb-4">
+
+                    <div class="form-check">
+                        <input type="radio"
+                               class="form-check-input"
+                               id="directMode"
+                               name="searchMode"
+                               value="direct"
+                               checked>
+
+                        <label class="form-check-label" for="directMode">
+                            Direct Trips
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="radio"
+                               class="form-check-input"
+                               id="transferMode"
+                               name="searchMode"
+                               value="transfer">
+
+                        <label class="form-check-label" for="transferMode">
+                            Transfer Trips (Ghép chuyến)
+                        </label>
+                    </div>
+
+                </div>
+
                 <div class="row g-3 align-items-end">
 
-                    <!-- BEGIN: DEPARTURE -->
                     <div class="col-md-3">
                         <label for="from" class="form-label">
                             Departure
                         </label>
 
-                        <select id="from" class="form-select">
-                            <option value="">All</option>
-                            <option>Can Tho</option>
-                            <option>Ho Chi Minh City</option>
-                            <option>Da Lat</option>
-                            <option>Nha Trang</option>
+                        <select id="from"
+                                class="form-select"
+                                required>
+                            <option value="">Select departure</option>
+                            <option value="1" data-search="TP.HCM">TP. Hồ Chí Minh</option>
+                            <option value="2" data-search="Cần Thơ">Cần Thơ</option>
+                            <option value="3" data-search="Kiên Giang">Kiên Giang</option>
+                            <option value="4" data-search="An Giang">An Giang</option>
+                            <option value="5" data-search="Cà Mau">Cà Mau</option>
+                            <option value="6" data-search="Bạc Liêu">Bạc Liêu</option>
+                            <option value="7" data-search="Sóc Trăng">Sóc Trăng</option>
+                            <option value="8" data-search="Đồng Tháp">Đồng Tháp</option>
+                            <option value="9" data-search="Bến Tre">Bến Tre</option>
+                            <option value="10" data-search="Vĩnh Long">Vĩnh Long</option>
+                            <option value="11" data-search="Tiền Giang">Tiền Giang</option>
+                            <option value="12" data-search="Trà Vinh">Trà Vinh</option>
+                            <option value="13" data-search="Hậu Giang">Hậu Giang</option>
+                            <option value="14" data-search="Long An">Long An</option>
                         </select>
                     </div>
-                    <!-- END: DEPARTURE -->
 
-                    <!-- BEGIN: DESTINATION AND SWAP -->
                     <div class="col-md-3">
                         <label for="to" class="form-label">
                             Destination
                         </label>
 
                         <div class="input-group">
-                            <select id="to" class="form-select">
-                                <option value="">All</option>
-                                <option>Can Tho</option>
-                                <option>Ho Chi Minh City</option>
-                                <option>Da Lat</option>
-                                <option>Nha Trang</option>
+
+                            <select id="to"
+                                    class="form-select"
+                                    required>
+                                <option value="">Select destination</option>
+                                <option value="1" data-search="TP.HCM">TP. Hồ Chí Minh</option>
+                                <option value="2" data-search="Cần Thơ">Cần Thơ</option>
+                                <option value="3" data-search="Kiên Giang">Kiên Giang</option>
+                                <option value="4" data-search="An Giang">An Giang</option>
+                                <option value="5" data-search="Cà Mau">Cà Mau</option>
+                                <option value="6" data-search="Bạc Liêu">Bạc Liêu</option>
+                                <option value="7" data-search="Sóc Trăng">Sóc Trăng</option>
+                                <option value="8" data-search="Đồng Tháp">Đồng Tháp</option>
+                                <option value="9" data-search="Bến Tre">Bến Tre</option>
+                                <option value="10" data-search="Vĩnh Long">Vĩnh Long</option>
+                                <option value="11" data-search="Tiền Giang">Tiền Giang</option>
+                                <option value="12" data-search="Trà Vinh">Trà Vinh</option>
+                                <option value="13" data-search="Hậu Giang">Hậu Giang</option>
+                                <option value="14" data-search="Long An">Long An</option>
                             </select>
 
                             <button type="button"
@@ -70,25 +109,38 @@
                                     aria-label="Swap departure and destination">
                                 <i class="bi bi-arrow-left-right"></i>
                             </button>
+
                         </div>
                     </div>
-                    <!-- END: DESTINATION AND SWAP -->
 
-                    <!-- BEGIN: DEPARTURE DATE -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="date" class="form-label">
                             Departure Date
                         </label>
 
                         <input type="date"
                                id="date"
-                               class="form-control">
+                               class="form-control"
+                               required>
                     </div>
-                    <!-- END: DEPARTURE DATE -->
 
-                    <!-- BEGIN: SEARCH AND RESET BUTTONS -->
+                    <div class="col-md-1">
+                        <label for="guests" class="form-label">
+                            Guests
+                        </label>
+
+                        <input type="number"
+                               id="guests"
+                               class="form-control"
+                               min="1"
+                               max="10"
+                               value="1"
+                               required>
+                    </div>
+
                     <div class="col-md-3">
                         <div class="d-flex gap-2">
+
                             <button type="submit"
                                     class="btn btn-warning flex-grow-1">
                                 <i class="bi bi-search me-1"></i>
@@ -102,242 +154,40 @@
                                     aria-label="Reset search">
                                 <i class="bi bi-arrow-clockwise"></i>
                             </button>
+
                         </div>
                     </div>
-                    <!-- END: SEARCH AND RESET BUTTONS -->
 
                 </div>
 
-                <!-- BEGIN: VALIDATION MESSAGE -->
                 <div id="searchError"
                      class="alert alert-danger mt-3 mb-0 d-none"
                      role="alert"></div>
-                <!-- END: VALIDATION MESSAGE -->
 
             </form>
+
         </div>
     </div>
 
-    <!-- END: SEARCH FORM -->
-
-    <!-- =====================================================
-         BEGIN: TRIP LIST - DEMO DATA
-
-         TODO DATABASE (TV2):
-         1. Replace hardcoded rows with TripDAO results.
-         2. Render trip data using JSTL and EL.
-         3. Use real availableSeats values.
-         4. Preserve the existing 8-column Bootstrap table.
-
-         TODO DATABASE (TV2):
-         TripDAO.searchTrips(from, to, date, guests)
-         will be used by the search functionality.
-
-         TODO PAGINATION (TV5):
-         Integrate pagination when TV5 finishes.
-
-         TODO INTEGRATION (TV4):
-         Connect the selected trip to the booking flow.
-
-         SEAT STATUS RULES:
-         0 seats   = Sold Out (red)
-         1-5 seats = Few Seats Left (yellow)
-         >5 seats  = Available (green)
-    ====================================================== -->
-
-    <h2 class="mb-3">Available Bus Trips</h2>
-
-    <div class="table-responsive">
-        <table class="table table-hover table-bordered align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Departure</th>
-                    <th>Destination</th>
-                    <th>Departure Date</th>
-                    <th>Departure Time</th>
-                    <th>Ticket Price</th>
-                    <th>Available Seats</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-
-            <tbody id="tripTable">
-
-                <!-- BEGIN: DEMO TRIP 1 -->
-                <tr>
-                    <td>1</td>
-                    <td>Can Tho</td>
-                    <td>Ho Chi Minh City</td>
-                    <td>2026-10-20</td>
-                    <td>08:00</td>
-                    <td>150.000 VND</td>
-                    <td>
-                        <span class="badge bg-success">
-                            20 Available
-                        </span>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-wrap gap-1">
-                            <button type="button"
-                                    class="btn btn-primary btn-sm"
-                                    onclick="bookTicket(1)">
-                                Book Ticket
-                            </button>
-
-                            <button type="button"
-                                    class="btn btn-secondary btn-sm"
-                                    onclick="viewDetail(1)">
-                                Details
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <!-- END: DEMO TRIP 1 -->
-
-                <!-- BEGIN: DEMO TRIP 2 -->
-                <tr>
-                    <td>2</td>
-                    <td>Ho Chi Minh City</td>
-                    <td>Da Lat</td>
-                    <td>2026-10-20</td>
-                    <td>22:00</td>
-                    <td>280.000 VND</td>
-                    <td>
-                        <span class="badge bg-success">
-                            12 Available
-                        </span>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-wrap gap-1">
-                            <button type="button"
-                                    class="btn btn-primary btn-sm"
-                                    onclick="bookTicket(2)">
-                                Book Ticket
-                            </button>
-
-                            <button type="button"
-                                    class="btn btn-secondary btn-sm"
-                                    onclick="viewDetail(2)">
-                                Details
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <!-- END: DEMO TRIP 2 -->
-
-                <!-- BEGIN: DEMO TRIP 3 -->
-                <tr>
-                    <td>3</td>
-                    <td>Ho Chi Minh City</td>
-                    <td>Nha Trang</td>
-                    <td>2026-10-21</td>
-                    <td>21:30</td>
-                    <td>320.000 VND</td>
-                    <td>
-                        <span class="badge bg-warning text-dark">
-                            5 Left
-                        </span>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-wrap gap-1">
-                            <button type="button"
-                                    class="btn btn-primary btn-sm"
-                                    onclick="bookTicket(3)">
-                                Book Ticket
-                            </button>
-
-                            <button type="button"
-                                    class="btn btn-secondary btn-sm"
-                                    onclick="viewDetail(3)">
-                                Details
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <!-- END: DEMO TRIP 3 -->
-
-                <!-- BEGIN: DEMO TRIP 4 -->
-                <tr>
-                    <td>4</td>
-                    <td>Da Lat</td>
-                    <td>Ho Chi Minh City</td>
-                    <td>2026-10-21</td>
-                    <td>09:00</td>
-                    <td>280.000 VND</td>
-                    <td>
-                        <span class="badge bg-danger">
-                            Sold Out
-                        </span>
-                    </td>
-                    <td>
-                        <button type="button"
-                                class="btn btn-danger btn-sm"
-                                disabled>
-                            Sold Out
-                        </button>
-                    </td>
-                </tr>
-                <!-- END: DEMO TRIP 4 -->
-
-            </tbody>
-        </table>
-    </div>
-
-    <!-- END: TRIP LIST - DEMO DATA -->
-
-    <!-- BEGIN: SEARCH RESULT MESSAGE -->
-    <p id="resultMessage" class="text-muted"></p>
-    <!-- END: SEARCH RESULT MESSAGE -->
-
 </div>
 
-<script>
-    // =====================================================
-    // BEGIN: SEARCH FORM ELEMENTS
-    // =====================================================
 
+<script>
     const searchForm = document.getElementById("searchForm");
     const fromSelect = document.getElementById("from");
     const toSelect = document.getElementById("to");
     const dateInput = document.getElementById("date");
+    const guestsInput = document.getElementById("guests");
     const searchError = document.getElementById("searchError");
-    const resultMessage = document.getElementById("resultMessage");
-    const tripRows = document.querySelectorAll("#tripTable tr");
-
-    // END: SEARCH FORM ELEMENTS
-
-
-    // =====================================================
-    // BEGIN: DATE VALIDATION
-    //
-    // TODO INTEGRATION (TV4):
-    // Validate the departure date again on the server.
-    // Client-side validation alone is not sufficient.
-    // =====================================================
 
     function getToday() {
         const now = new Date();
-
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
 
         return year + "-" + month + "-" + day;
     }
-
-    function updateMinimumDate() {
-        dateInput.min = getToday();
-    }
-
-    updateMinimumDate();
-
-    // END: DATE VALIDATION
-
-
-    // =====================================================
-    // BEGIN: VALIDATION MESSAGES
-    // =====================================================
 
     function showError(message) {
         searchError.textContent = message;
@@ -349,164 +199,82 @@
         searchError.classList.add("d-none");
     }
 
-    // END: VALIDATION MESSAGES
-
-
-    // =====================================================
-    // BEGIN: SWAP DEPARTURE AND DESTINATION
-    //
-    // Keep this functionality when integrating database.
-    // =====================================================
+    dateInput.min = getToday();
 
     document.getElementById("swapButton").addEventListener(
-        "click", function() {
-
-            const temp = fromSelect.value;
-
-            fromSelect.value = toSelect.value;
-            toSelect.value = temp;
-
-            clearError();
-        }
+            "click", function () {
+                const temp = fromSelect.value;
+                fromSelect.value = toSelect.value;
+                toSelect.value = temp;
+                clearError();
+            }
     );
 
-    // END: SWAP DEPARTURE AND DESTINATION
-
-
-    // =====================================================
-    // BEGIN: CLIENT-SIDE TRIP SEARCH
-    //
-    // TODO DATABASE (TV2):
-    // Replace hardcoded trip data with TripDAO results.
-    //
-    // TODO INTEGRATION (TV4):
-    // Connect the search form to the search Controller.
-    // Do not keep filtering only HTML rows after
-    // server-side search is implemented.
-    //
-    // KEEP:
-    // - Date validation
-    // - Departure / Destination validation
-    // - Swap functionality
-    // - Reset functionality
-    // =====================================================
-
-    searchForm.addEventListener("submit", function(e) {
+    searchForm.addEventListener("submit", function (e) {
         e.preventDefault();
-
-        updateMinimumDate();
         clearError();
 
         const from = fromSelect.value;
         const to = toSelect.value;
         const date = dateInput.value;
+        const guests = Number(guestsInput.value);
 
-        // Check duplicate locations
-        if (from && to && from === to) {
-            showError(
-                "Departure and destination must be different."
-            );
+        if (!from || !to || !date) {
+            showError("Please enter all search information.");
             return;
         }
 
-        // Check past dates
-        if (date && date < getToday()) {
-            showError(
-                "Departure date cannot be in the past."
-            );
+        if (from === to) {
+            showError("Departure and destination must be different.");
             return;
         }
 
-        let count = 0;
+        if (date < getToday()) {
+            showError("Departure date cannot be in the past.");
+            return;
+        }
 
-        tripRows.forEach(function(row) {
-            const cells = row.querySelectorAll("td");
+        if (!Number.isInteger(guests) || guests < 1 || guests > 10) {
+            showError("Guests must be between 1 and 10.");
+            return;
+        }
 
-            const matchFrom =
-                !from || cells[1].innerText.trim() === from;
+        const transfer =
+                document.getElementById("transferMode").checked;
 
-            const matchTo =
-                !to || cells[2].innerText.trim() === to;
+        const params = new URLSearchParams();
 
-            const matchDate =
-                !date || cells[3].innerText.trim() === date;
+        if (transfer) {
+            params.set("fromId", from);
+            params.set("toId", to);
+        } else {
+            params.set(
+                    "from",
+                    fromSelect.selectedOptions[0].dataset.search
+                    );
+            params.set(
+                    "to",
+                    toSelect.selectedOptions[0].dataset.search
+                    );
+        }
 
-            const isMatch =
-                matchFrom && matchTo && matchDate;
+        params.set("date", date);
+        params.set("guests", guests);
 
-            row.style.display = isMatch ? "" : "none";
+        const path = transfer ? "/transfer" : "/search";
 
-            if (isMatch) {
-                count++;
-            }
-        });
-
-        resultMessage.innerText =
-            "Found " + count + " bus trips.";
+        window.location.href =
+                "${pageContext.request.contextPath}"
+                + path + "?" + params.toString();
     });
 
-    // END: CLIENT-SIDE TRIP SEARCH
-
-
-    // =====================================================
-    // BEGIN: RESET SEARCH
-    //
-    // TODO INTEGRATION (TV4):
-    // When server-side search is implemented,
-    // make Reset restore the default trip list.
-    // =====================================================
-
     document.getElementById("resetButton").addEventListener(
-        "click", function() {
-
-            searchForm.reset();
-            clearError();
-            updateMinimumDate();
-
-            tripRows.forEach(function(row) {
-                row.style.display = "";
-            });
-
-            resultMessage.innerText =
-                "Found " + tripRows.length + " bus trips.";
-        }
+            "click", function () {
+                searchForm.reset();
+                clearError();
+                dateInput.min = getToday();
+            }
     );
-
-    // END: RESET SEARCH
-
-
-    // =====================================================
-    // BEGIN: BOOKING AND DETAILS - DEMO
-    //
-    // TODO INTEGRATION (TV4):
-    // Connect Book Ticket to BookingController.
-    // Pass the selected trip ID to the booking process.
-    //
-    // TODO INTEGRATION:
-    // Connect Details to the appropriate trip detail page.
-    //
-    // Keep these demo functions until integration.
-    // =====================================================
-
-    function bookTicket(id) {
-        alert("Demo booking for trip ID: " + id);
-    }
-
-    function viewDetail(id) {
-        alert("Demo trip details for trip ID: " + id);
-    }
-
-    // END: BOOKING AND DETAILS - DEMO
-
-
-    // =====================================================
-    // BEGIN: INITIAL RESULT COUNT
-    // =====================================================
-
-    resultMessage.innerText =
-        "Found " + tripRows.length + " bus trips.";
-
-    // END: INITIAL RESULT COUNT
 </script>
 
 <%@include file="/WEB-INF/common/footer.jsp" %>
