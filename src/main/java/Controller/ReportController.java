@@ -4,85 +4,181 @@
  */
 package Controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import dao.ReportDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+
 /**
  *
  * @author Hứa Hạo Danh (TV5)
  */
-@WebServlet(name = "ReportController", urlPatterns = {"/report"})
+
+@WebServlet(name = "ReportController", urlPatterns = {"/report", "/print-ticket"})
 public class ReportController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doGet(HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ReportController</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ReportController at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
+         String path = request.getServletPath();
+
+    if ("/print-ticket".equals(path)) {
+        String ticketIdValue = request.getParameter("id");
+
+        if (ticketIdValue == null || ticketIdValue.trim().isEmpty()) {
+            response.sendError(
+                HttpServletResponse.SC_BAD_REQUEST,
+                "Vui long cung cap ma ve!"
+            );
+            return;
         }
+
+        int ticketId;
+
+        try {
+            ticketId = Integer.parseInt(ticketIdValue);
+        } catch (NumberFormatException e) {
+            response.sendError(
+                HttpServletResponse.SC_BAD_REQUEST,
+                "Ma ve khong hop le!"
+            );
+            return;
+        }
+
+        // TODO: Goi DAO lay thong tin ve theo ticketId
+        // Neu khong tim thay ve, thong bao loi.
+        // Neu tim thay ve:
+        // request.setAttribute("ticket", ticket);
+        // request.getRequestDispatcher(
+        //     "/WEB-INF/admin/print-ticket.jsp"
+        // ).forward(request, response);
+
+        return;
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+        LocalDate today = LocalDate.now();
+
+        int month = today.getMonthValue();
+        int year = today.getYear();
+        int quarter = (month - 1) / 3 + 1;
+
+        ReportDAO dao = new ReportDAO();
+        List<Map<String, Object>> revenueList = new ArrayList<>();
+
+        // Mac dinh hien thi bao cao theo thang hien tai
+        revenueList = dao.getRevenueByRoute(month, year);
+
+        request.setAttribute("revenueList", revenueList);
+        request.setAttribute("reportType", "month");
+        request.setAttribute("month", month);
+        request.setAttribute("quarter", quarter);
+        request.setAttribute("year", year);
+
+        request.getRequestDispatcher(
+                "/WEB-INF/admin/report.jsp"
+        ).forward(request, response);
+    }
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doPost(HttpServletRequest request,
+            HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+
+        LocalDate today = LocalDate.now();
+
+        int currentMonth = today.getMonthValue();
+        int currentYear = today.getYear();
+        int currentQuarter = (currentMonth - 1) / 3 + 1;
+
+        String reportType = request.getParameter("type");
+
+        if (reportType == null || reportType.isEmpty()) {
+            reportType = "month";
+        }
+
+        int month = currentMonth;
+        int quarter = currentQuarter;
+        int year = currentYear;
+
+        String error = null;
+
+        try {
+            String monthValue = request.getParameter("month");
+            String quarterValue = request.getParameter("quarter");
+            String yearValue = request.getParameter("year");
+
+            if (monthValue != null && !monthValue.trim().isEmpty()) {
+                month = Integer.parseInt(monthValue.trim());
+            }
+
+            if (quarterValue != null && !quarterValue.trim().isEmpty()) {
+                quarter = Integer.parseInt(quarterValue.trim());
+            }
+
+            if (yearValue != null && !yearValue.trim().isEmpty()) {
+                year = Integer.parseInt(yearValue.trim());
+            }
+
+            if (month < 1 || month > 12) {
+                month = currentMonth;
+                error = "Tháng phải nằm trong khoảng từ 1 đến 12!";
+            }
+
+            if (quarter < 1 || quarter > 4) {
+                quarter = currentQuarter;
+                error = "Quý phải nằm trong khoảng từ 1 đến 4!";
+            }
+
+            if (year < 1 || year > 9999) {
+                year = currentYear;
+                error = "Năm không hợp lệ!";
+            }
+
+        } catch (NumberFormatException e) {
+            error = "Vui lòng nhập tháng, quý và năm hợp lệ!";
+            month = currentMonth;
+            quarter = currentQuarter;
+            year = currentYear;
+        }
+
+        ReportDAO dao = new ReportDAO();
+        List<Map<String, Object>> revenueList = new ArrayList<>();
+
+        switch (reportType) {
+            case "quarter":
+                revenueList = dao.getRevenueByQuarter(quarter, year);
+                break;
+
+            case "year":
+                revenueList = dao.getRevenueByYear(year);
+                break;
+
+            case "month":
+            default:
+                reportType = "month";
+                revenueList = dao.getRevenueByRoute(month, year);
+                break;
+        }
+
+        request.setAttribute("revenueList", revenueList);
+        request.setAttribute("reportType", reportType);
+        request.setAttribute("month", month);
+        request.setAttribute("quarter", quarter);
+        request.setAttribute("year", year);
+        request.setAttribute("error", error);
+
+        request.getRequestDispatcher(
+                "/WEB-INF/admin/report.jsp"
+        ).forward(request, response);
     }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        processRequest(request, response);
-    }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
 }
-
