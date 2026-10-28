@@ -1,7 +1,7 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
-
+<%@taglib prefix="fmt" uri="jakarta.tags.fmt"%>
 <%@include file="/WEB-INF/common/header.jsp" %>
 
 <style>
@@ -98,8 +98,13 @@
 
                     <div class="col-12">
                         <strong>Tổng tiền:</strong>
+                        <fmt:setLocale value="de_DE" />
+
                         <h4 class="text-danger fw-bold">
-                            <c:out value="${ticket.totalPrice}"/> VNĐ
+                            <fmt:formatNumber
+                                value="${ticket.totalPrice}"
+                                pattern="#,##0"
+                                groupingUsed="true" /> VNĐ
                         </h4>
                     </div>
                 </div>
