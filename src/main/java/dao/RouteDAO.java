@@ -133,4 +133,24 @@ public class RouteDAO extends DBContext {
         }
 
     }
+    
+    
+    // Ham phu tro 
+    public List<Location> getAllLocations() {
+        List<Location> list = new ArrayList<>();
+        try {
+            String sql = "SELECT Id, Name FROM Locations ORDER BY Name";
+            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Location(rs.getInt("Id"), rs.getString("Name")));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(RouteDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return list;
+    }
+    
 }
+
+

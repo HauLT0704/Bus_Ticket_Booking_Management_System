@@ -53,12 +53,16 @@ public class RouteController extends HttpServlet {
         } else if (action.equals("edit")) {
             int id = Integer.parseInt(request.getParameter("id"));
             Route route = routeDAO.getById(id);
+            List<Location> locationList = routeDAO.getAllLocations();
             request.setAttribute("route", route);
+            request.setAttribute("locationList", locationList);
             request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
-
+            
         } else if (action.equals("add")) {
+            List<Location> locationList = routeDAO.getAllLocations();
+            request.setAttribute("locationList", locationList);
             request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
-
+            
         } else if (action.equals("delete")) {
             int id = Integer.parseInt(request.getParameter("id"));
             routeDAO.delete(id);
@@ -79,40 +83,63 @@ public class RouteController extends HttpServlet {
         int toLocationId = Integer.parseInt(request.getParameter("toLocationId"));
         double distance = Double.parseDouble(request.getParameter("distance"));
         int duration = Integer.parseInt(request.getParameter("duration"));
+        
+        // Kiểm tra điều kiện: Quãng đường & Thời gian từ 1 đến 1000, Điểm đi khác Điểm đến
+        if (distance <= 0 || distance > 1000 || duration <= 0 || duration > 1000 || fromLocationId == toLocationId) {
+            List<Location> locationList = routeDAO.getAllLocations();
+            request.setAttribute("locationList", locationList);
+
+            Route route = new Route();
+            route.setDistance(distance);
+            route.setDuration(duration);
+            Location fromLoc = new Location(); fromLoc.setId(fromLocationId);
+            Location toLoc = new Location(); toLoc.setId(toLocationId);
+            route.setFromLocation(fromLoc);
+            route.setToLocation(toLoc);
+            
+            if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
+                route.setId(Integer.parseInt(request.getParameter("id")));
+            }
+
+            request.setAttribute("route", route);
+            request.setAttribute("errorMsg", "Vui lòng chọn điểm đi khác điểm đến, quãng đường & thời gian dự kiến nằm trong khoảng từ 1 đến 1000!");
+            request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
+            return;
+        }
 
         if ("insert".equals(action)) {
             Route route = new Route();
-            
+
             // Đóng gói ID vào đối tượng Location lồng bên trong Route
             Location fromLoc = new Location();
             fromLoc.setId(fromLocationId);
             Location toLoc = new Location();
             toLoc.setId(toLocationId);
-            
+
             route.setFromLocation(fromLoc);
             route.setToLocation(toLoc);
             route.setDistance(distance);
             route.setDuration(duration);
-            
+
             routeDAO.create(route);
             response.sendRedirect(request.getContextPath() + "/admin/route?msg=added");
-            
+
         } else if ("update".equals(action)) {
             int id = Integer.parseInt(request.getParameter("id"));
             Route route = new Route();
             route.setId(id);
-            
+
             // Đóng gói ID vào đối tượng Location lồng bên trong Route
             Location fromLoc = new Location();
             fromLoc.setId(fromLocationId);
             Location toLoc = new Location();
             toLoc.setId(toLocationId);
-            
+
             route.setFromLocation(fromLoc);
             route.setToLocation(toLoc);
             route.setDistance(distance);
             route.setDuration(duration);
-            
+
             routeDAO.update(route);
             response.sendRedirect(request.getContextPath() + "/admin/route?msg=updated");
         }
