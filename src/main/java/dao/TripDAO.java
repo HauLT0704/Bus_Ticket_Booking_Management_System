@@ -226,4 +226,50 @@ public class TripDAO extends DBContext {
             Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    
+    // Ham phu tro
+    public List<Route> getAllRoutes() {
+        List<Route> list = new ArrayList<>();
+        try {
+            String sql = "SELECT r.Id, l1.Id AS FromId, l1.Name AS FromName, l2.Id AS ToId, l2.Name AS ToName "
+                    + "FROM Routes r "
+                    + "JOIN Locations l1 ON r.FromLocationId = l1.Id "
+                    + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
+                    + "ORDER BY r.Id";
+            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Location fromLoc = new Location(rs.getInt("FromId"), rs.getString("FromName"));
+                Location toLoc = new Location(rs.getInt("ToId"), rs.getString("ToName"));
+
+                Route route = new Route();
+                route.setId(rs.getInt("Id"));
+                route.setFromLocation(fromLoc);
+                route.setToLocation(toLoc);
+                list.add(route);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return list;
+    }
+
+    public List<Vehicle> getAllVehicles() {
+        List<Vehicle> list = new ArrayList<>();
+        try {
+            String sql = "SELECT Id, LicensePlate FROM Vehicles ORDER BY Id";
+            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Vehicle vehicle = new Vehicle();
+                vehicle.setId(rs.getInt("Id"));
+                vehicle.setLicensePlate(rs.getString("LicensePlate"));
+                list.add(vehicle);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return list;
+    }
 }

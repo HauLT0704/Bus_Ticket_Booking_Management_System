@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import model.Route;
 import model.Trip;
@@ -55,10 +56,20 @@ public class TripController extends HttpServlet {
         } else if (action.equals("edit")) {
             int id = Integer.parseInt(request.getParameter("id"));
             Trip trip = tripDAO.getById(id);
+            List<Route> routeList = tripDAO.getAllRoutes();
+            List<Vehicle> vehicleList = tripDAO.getAllVehicles();
+            
             request.setAttribute("trip", trip);
+            request.setAttribute("routeList", routeList);
+            request.setAttribute("vehicleList", vehicleList);
             request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
             
         } else if (action.equals("add")) {
+            List<Route> routeList = tripDAO.getAllRoutes();
+            List<Vehicle> vehicleList = tripDAO.getAllVehicles();
+            
+            request.setAttribute("routeList", routeList);
+            request.setAttribute("vehicleList", vehicleList);
             request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
             
         } else if (action.equals("delete")) {
@@ -81,15 +92,59 @@ public class TripController extends HttpServlet {
         int routeId = Integer.parseInt(request.getParameter("routeId"));
         int vehicleId = Integer.parseInt(request.getParameter("vehicleId"));
         
-        // Xử lý chuyển đổi chuỗi từ <input type="datetime-local"> sang SQL Timestamp
-        String depTimeStr = request.getParameter("departureTime").replace("T", " ") + ":00";
-        String arrTimeStr = request.getParameter("arrivalTime").replace("T", " ") + ":00";
+       // Nhận dữ liệu từ <input type="datetime-local"> (Định dạng gửi lên: YYYY-MM-DDTHH:mm)
+        String depParam = request.getParameter("departureTime");
+        String arrParam = request.getParameter("arrivalTime");
+        
+        if (depParam == null || depParam.isEmpty() || arrParam == null || arrParam.isEmpty()) {
+            List<Route> routeList = tripDAO.getAllRoutes();
+            List<Vehicle> vehicleList = tripDAO.getAllVehicles();
+            request.setAttribute("routeList", routeList);
+            request.setAttribute("vehicleList", vehicleList);
+            request.setAttribute("errorMsg", "Vui lòng chọn đầy đủ thời gian khởi hành và thời gian đến!");
+            request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
+            return;
+        }
+        
+        // Chuyển đổi sang chuẩn SQL Timestamp (thêm :00 cho giây)
+        String depTimeStr = depParam.replace("T", " ") + ":00";
+        String arrTimeStr = arrParam.replace("T", " ") + ":00";
         Timestamp departureTime = Timestamp.valueOf(depTimeStr);
         Timestamp arrivalTime = Timestamp.valueOf(arrTimeStr);
         
         int availableSeats = Integer.parseInt(request.getParameter("availableSeats"));
         double price = Double.parseDouble(request.getParameter("price"));
         String status = request.getParameter("status");
+        
+        // Tạo mốc thời gian hiện tại, TRỪ HAO đi 5 phút (300000 ms) để bấm nút Today không bị lỗi lệch vài giây
+        Timestamp nowWithTolerance = new Timestamp(System.currentTimeMillis() - 300000);
+        
+        if (departureTime.before(nowWithTolerance) || arrivalTime.before(departureTime) || availableSeats < 15 || availableSeats > 59 || price < 0) {
+            List<Route> routeList = tripDAO.getAllRoutes();
+            List<Vehicle> vehicleList = tripDAO.getAllVehicles();
+            request.setAttribute("routeList", routeList);
+            request.setAttribute("vehicleList", vehicleList);
+            
+            Trip trip = new Trip();
+            Route r = new Route(); r.setId(routeId);
+            Vehicle v = new Vehicle(); v.setId(vehicleId);
+            trip.setRoute(r);
+            trip.setVehicle(v);
+            trip.setDepartureTime(departureTime);
+            trip.setArrivalTime(arrivalTime);
+            trip.setAvailableSeats(availableSeats);
+            trip.setPrice(price);
+            trip.setStatus(status);
+            
+            if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
+                trip.setId(Integer.parseInt(request.getParameter("id")));
+            }
+            
+            request.setAttribute("trip", trip);
+            request.setAttribute("errorMsg", "Lỗi dữ liệu: Thời gian khởi hành không được ở trong quá khứ, thời gian đến phải sau thời gian khởi hành, số ghế phải từ 15 đến 59!");
+            request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
+            return;
+        }
 
         if ("insert".equals(action)) {
             Trip trip = new Trip();
