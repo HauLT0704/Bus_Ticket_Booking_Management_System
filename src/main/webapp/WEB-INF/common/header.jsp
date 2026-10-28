@@ -4,157 +4,283 @@
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <title>Bus Ticket Booking</title>
+    <title>Bus Ticket Booking</title>
 
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-        <style>
+    <style>
+        .navbar .nav-link {
+            border-radius: 8px;
+            padding: 8px 12px !important;
+            transition: background-color 0.25s ease;
+        }
+
+        .navbar .nav-link:hover,
+        .navbar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar .nav-link:focus-visible {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        .navbar .dropdown-item {
+            padding: 10px 15px;
+        }
+
+        .navbar .dropdown-item:hover,
+        .navbar .dropdown-item.active {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
             .navbar .nav-link {
-                border-radius: 10px;
-                padding: 10px 16px !important;
-                transition: background-color 0.25s ease,
-                    transform 0.25s ease;
+                transition: none;
             }
+        }
+    </style>
+</head>
 
-            .navbar .nav-link:hover {
-                background-color: rgba(255, 255, 255, 0.18);
-                transform: translateY(-2px);
-            }
+<body class="bg-light">
 
-            .navbar .nav-link:focus-visible {
-                outline: 2px solid white;
-                outline-offset: 2px;
-            }
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary py-2 shadow-sm">
 
-            .navbar .nav-link.active {
-                background-color: rgba(255, 255, 255, 0.25);
-                font-weight: 600;
-            }
+    <div class="container-fluid px-4">
 
-            @media (prefers-reduced-motion: reduce) {
-                .navbar .nav-link {
-                    transition: none;
-                }
+        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2"
+           href="${pageContext.request.contextPath}/home">
 
-                .navbar .nav-link:hover {
-                    transform: none;
-                }
-                .navbar .nav-link.active {
-                    background-color: rgba(255, 255, 255, 0.25);
-                    font-weight: 600;
-                }
-            }
-        </style>
-    </head>
+            <i class="bi bi-bus-front-fill fs-3"></i>
+            BUS BOOKING
 
-    <body class="bg-light">
+        </a>
 
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary py-3 shadow-sm">
-            <div class="container-fluid px-4">
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarMenu"
+                aria-controls="navbarMenu"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
 
-                <a class="navbar-brand fw-bold fs-3 d-flex align-items-center gap-2"
-                   href="${pageContext.request.contextPath}/home">
-                    <i class="bi bi-bus-front-fill fs-2"></i>
-                    BUS BOOKING
-                </a>
+            <span class="navbar-toggler-icon"></span>
 
-                <button class="navbar-toggler"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#navbarMenu"
-                        aria-controls="navbarMenu"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation">
+        </button>
 
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+        <div class="collapse navbar-collapse" id="navbarMenu">
 
-                <div class="collapse navbar-collapse" id="navbarMenu">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-lg-1">
 
+                <c:choose>
 
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-lg-3">
+                    <c:when test="${not empty sessionScope.currentUser and sessionScope.currentUser.admin}">
 
                         <li class="nav-item">
-                            <a href="${pageContext.request.contextPath}/home"
-                               class="nav-link text-white fs-5
-                               ${pageContext.request.requestURI.endsWith('/home') && param.mode != 'transfer' ? 'active' : ''}">
+
+                            <a class="nav-link text-white
+                               ${pageContext.request.requestURI.endsWith('/dashboard') ? 'active' : ''}"
+                               href="${pageContext.request.contextPath}/admin/dashboard">
+
+                                <i class="bi bi-speedometer2 me-1"></i>
+                                Dashboard
+
+                            </a>
+
+                        </li>
+
+                        <li class="nav-item dropdown">
+
+                            <a class="nav-link dropdown-toggle text-white"
+                               href="#"
+                               role="button"
+                               data-bs-toggle="dropdown"
+                               aria-expanded="false">
+
+                                <i class="bi bi-grid me-1"></i>
+                                Management
+
+                            </a>
+
+                            <ul class="dropdown-menu shadow">
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="${pageContext.request.contextPath}/admin/trip">
+
+                                        <i class="bi bi-bus-front me-2"></i>
+                                        Trip Management
+
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="${pageContext.request.contextPath}/customer">
+
+                                        <i class="bi bi-people me-2"></i>
+                                        Customer Management
+
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="${pageContext.request.contextPath}/vehicle">
+
+                                        <i class="bi bi-truck-front me-2"></i>
+                                        Vehicle Management
+
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="${pageContext.request.contextPath}/admin/location">
+
+                                        <i class="bi bi-geo-alt me-2"></i>
+                                        Location Management
+
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="${pageContext.request.contextPath}/admin/route">
+
+                                        <i class="bi bi-signpost-split me-2"></i>
+                                        Route Management
+
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="${pageContext.request.contextPath}/admin/report">
+
+                                        <i class="bi bi-bar-chart-line me-2"></i>
+                                        Revenue Report
+
+                                    </a>
+                                </li>
+
+                            </ul>
+
+                        </li>
+
+                    </c:when>
+
+                    <c:otherwise>
+
+                        <li class="nav-item">
+
+                            <a class="nav-link text-white
+                               ${pageContext.request.requestURI.endsWith('/home') and param.mode != 'transfer' ? 'active' : ''}"
+                               href="${pageContext.request.contextPath}/home">
+
                                 <i class="bi bi-house-door me-1"></i>
                                 Home
+
                             </a>
+
                         </li>
 
                         <li class="nav-item">
-                            <a href="${pageContext.request.contextPath}/search"
-                               class="nav-link text-white fs-5
-                               ${pageContext.request.requestURI.endsWith('/search') ? 'active' : ''}">
+
+                            <a class="nav-link text-white
+                               ${pageContext.request.requestURI.endsWith('/search') ? 'active' : ''}"
+                               href="${pageContext.request.contextPath}/search">
+
                                 <i class="bi bi-search me-1"></i>
                                 Search Tickets
+
                             </a>
+
                         </li>
 
                         <li class="nav-item">
-                            <a href="${pageContext.request.contextPath}/home?mode=transfer"
-                               class="nav-link text-white fs-5
-                               ${(pageContext.request.requestURI.endsWith('/home') && param.mode == 'transfer')
-                                 || pageContext.request.requestURI.endsWith('/transfer') ? 'active' : ''}">
+
+                            <a class="nav-link text-white
+                               ${(pageContext.request.requestURI.endsWith('/home') and param.mode == 'transfer') or pageContext.request.requestURI.endsWith('/transfer') ? 'active' : ''}"
+                               href="${pageContext.request.contextPath}/home?mode=transfer">
+
                                 <i class="bi bi-arrow-left-right me-1"></i>
                                 Transfer Trips
+
                             </a>
+
                         </li>
 
-                    </ul>
+                    </c:otherwise>
 
-                    <div class="d-flex flex-wrap align-items-center gap-3">
+                </c:choose>
 
-                        <c:if test="${not empty sessionScope.currentUser}">
+            </ul>
 
-                            <span class="badge bg-white text-primary fs-6 px-3 py-2 rounded-pill">
+            <div class="d-flex align-items-center gap-2">
 
-                                <i class="bi bi-person-circle me-2"></i>
+                <c:choose>
 
-                                Hello
-                                <c:choose>
-                                    <c:when test="${not empty sessionScope.currentUser.fullName}">
-                                        <c:out value="${sessionScope.currentUser.fullName}"/>
-                                    </c:when>
+                    <c:when test="${not empty sessionScope.currentUser}">
 
-                                    <c:otherwise>
-                                        <c:out value="${sessionScope.currentUser.username}"/>
-                                    </c:otherwise>
-                                </c:choose>
+                        <span class="badge bg-white text-primary px-3 py-2 rounded-pill">
 
-                            </span>
+                            <i class="bi bi-person-circle me-1"></i>
+                            Hello
 
-                            <a href="${pageContext.request.contextPath}/logout"
-                               class="btn btn-outline-light fw-bold">
+                            <c:choose>
 
-                                <i class="bi bi-box-arrow-right me-1"></i>
-                                Logout
+                                <c:when test="${not empty sessionScope.currentUser.fullName}">
+                                    <c:out value="${sessionScope.currentUser.fullName}"/>
+                                </c:when>
 
-                            </a>
+                                <c:otherwise>
+                                    <c:out value="${sessionScope.currentUser.username}"/>
+                                </c:otherwise>
 
-                        </c:if>
+                            </c:choose>
 
-                        <c:if test="${empty sessionScope.currentUser}">
+                        </span>
 
-                            <a href="${pageContext.request.contextPath}/login"
-                               class="btn btn-light text-primary fw-bold">
+                        <a href="${pageContext.request.contextPath}/logout"
+                           class="btn btn-outline-light btn-sm fw-bold">
 
-                                <i class="bi bi-box-arrow-in-right me-1"></i>
-                                Login
+                            <i class="bi bi-box-arrow-right me-1"></i>
+                            Logout
 
-                            </a>
+                        </a>
 
-                        </c:if>
+                    </c:when>
 
-                    </div>
+                    <c:otherwise>
 
-                </div>
+                        <a href="${pageContext.request.contextPath}/login"
+                           class="btn btn-light btn-sm text-primary fw-bold">
+
+                            <i class="bi bi-box-arrow-in-right me-1"></i>
+                            Login
+
+                        </a>
+
+                    </c:otherwise>
+
+                </c:choose>
+
             </div>
-        </nav>
+
+        </div>
+
+    </div>
+
+</nav>

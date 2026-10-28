@@ -71,9 +71,10 @@
 
     <h3 class="fw-bold mb-4">Quick Management</h3>
 
+
     <div class="row g-3">
 
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body p-4">
 
@@ -95,7 +96,7 @@
             </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body p-4">
 
@@ -117,7 +118,95 @@
             </div>
         </div>
 
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+
+                    <h5>
+                        <i class="bi bi-truck-front text-primary me-2"></i>
+                        Vehicle Management
+                    </h5>
+
+                    <p class="text-muted">
+                        Manage vehicles and their information.
+                    </p>
+
+                    <a href="${pageContext.request.contextPath}/vehicle"
+                       class="btn btn-outline-primary">
+                        Manage Vehicles
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+
+                    <h5>
+                        <i class="bi bi-geo-alt text-primary me-2"></i>
+                        Location Management
+                    </h5>
+
+                    <p class="text-muted">
+                        Manage provinces and cities.
+                    </p>
+
+                    <a href="${pageContext.request.contextPath}/admin/location"
+                       class="btn btn-outline-primary">
+                        Manage Locations
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+
+                    <h5>
+                        <i class="bi bi-signpost-split text-primary me-2"></i>
+                        Route Management
+                    </h5>
+
+                    <p class="text-muted">
+                        Manage bus routes and distances.
+                    </p>
+
+                    <a href="${pageContext.request.contextPath}/admin/route"
+                       class="btn btn-outline-primary">
+                        Manage Routes
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+
+                    <h5>
+                        <i class="bi bi-bar-chart-line text-primary me-2"></i>
+                        Revenue Report
+                    </h5>
+
+                    <p class="text-muted">
+                        View ticket sales and revenue reports.
+                    </p>
+
+                    <a href="${pageContext.request.contextPath}/admin/report"
+                       class="btn btn-outline-primary">
+                        View Reports
+                    </a>
+
+                </div>
+            </div>
+        </div>
     </div>
+
 
 </div>
 
