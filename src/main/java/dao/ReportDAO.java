@@ -145,4 +145,82 @@ public class ReportDAO extends DBContext {
 
         return revenueList;
     }
+    
+    
+    // Lay thong tin chi tiet ve theo ma ve
+    public Map<String, Object> getTicketDetails(int ticketId) {
+
+        Map<String, Object> ticket = null;
+
+        String sql = "SELECT "
+                + "t.Id AS TicketId, "
+                + "c.FullName AS CustomerName, "
+                + "c.Phone AS Phone, "
+                + "t.SeatNumber AS SeatNumber, "
+                + "l1.Name AS FromLocation, "
+                + "l2.Name AS ToLocation, "
+                + "tr.DepartureTime AS DepartureTime, "
+                + "v.LicensePlate AS LicensePlate, "
+                + "t.BookingTime AS BookingTime, "
+                + "t.Status AS Status, "
+                + "t.TotalPrice AS TotalPrice "
+                + "FROM Tickets t "
+                + "JOIN Customers c ON t.CustomerId = c.Id "
+                + "JOIN Trips tr ON t.TripId = tr.Id "
+                + "JOIN Routes r ON tr.RouteId = r.Id "
+                + "JOIN Locations l1 ON r.FromLocationId = l1.Id "
+                + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
+                + "JOIN Vehicles v ON tr.VehicleId = v.Id "
+                + "WHERE t.Id = ?";
+
+        try (Connection conn = this.getConnection()) {
+
+            if (conn == null) {
+                System.out.println("Khong ket noi duoc database!");
+                return null;
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setInt(1, ticketId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    if (rs.next()) {
+
+                        ticket = new HashMap<>();
+
+                        ticket.put("id", rs.getInt("TicketId"));
+                        ticket.put("customerName",
+                                rs.getString("CustomerName"));
+                        ticket.put("phone",
+                                rs.getString("Phone"));
+                        ticket.put("seatNumber",
+                                rs.getString("SeatNumber"));
+                        ticket.put("fromLocation",
+                                rs.getString("FromLocation"));
+                        ticket.put("toLocation",
+                                rs.getString("ToLocation"));
+                        ticket.put("departureTime",
+                                rs.getTimestamp("DepartureTime"));
+                        ticket.put("licensePlate",
+                                rs.getString("LicensePlate"));
+                        ticket.put("bookingTime",
+                                rs.getTimestamp("BookingTime"));
+                        ticket.put("status",
+                                rs.getString("Status"));
+                        ticket.put("totalPrice",
+                                rs.getBigDecimal("TotalPrice"));
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Loi khi lay thong tin ve:");
+            e.printStackTrace();
+        }
+
+        return ticket;
+    }
+
 }
