@@ -5,7 +5,6 @@
     <div class="container">
         <div class="row align-items-center text-center text-md-start gy-4">
 
-            <!-- System Information -->
             <div class="col-md-5">
                 <h4 class="fw-bold mb-3">
                     <i class="bi bi-bus-front-fill me-2"></i>
@@ -18,7 +17,6 @@
                 </p>
             </div>
 
-            <!-- Quick Links -->
             <div class="col-md-4">
                 <h5 class="fw-bold mb-3">Quick Links</h5>
 
@@ -34,10 +32,15 @@
                         <i class="bi bi-search me-2"></i>
                         Search Tickets
                     </a>
+
+                    <a href="${pageContext.request.contextPath}/home?mode=transfer"
+                       class="text-white text-decoration-none">
+                        <i class="bi bi-arrow-left-right me-2"></i>
+                        Transfer Trips
+                    </a>
                 </div>
             </div>
 
-            <!-- About Us -->
             <div class="col-md-3">
                 <h5 class="fw-bold mb-3">About Us</h5>
 
@@ -56,7 +59,6 @@
 
         <hr class="border-white opacity-50 my-4">
 
-        <!-- Copyright -->
         <div class="text-center">
             <p class="mb-0 small text-white-50">
                 &copy; 2026 Bus Ticket Booking System
@@ -66,7 +68,6 @@
     </div>
 </footer>
 
-<!-- Bootstrap 5 JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
