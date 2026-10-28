@@ -21,12 +21,29 @@
                         </label>
                         <select name="from" class="form-select form-select-sm">
                             <option value="">-- Tất cả điểm đi --</option>
-                            <option value="Cần Thơ" ${selectedFrom == 'Cần Thơ' ? 'selected' : ''}>Cần Thơ</option>
-                            <option value="TP.HCM" ${selectedFrom == 'TP.HCM' ? 'selected' : ''}>TP. Hồ Chí Minh</option>
-                            <option value="Đà Lạt" ${selectedFrom == 'Đà Lạt' ? 'selected' : ''}>Đà Lạt (Lâm Đồng)</option>
-                            <option value="Nha Trang" ${selectedFrom == 'Nha Trang' ? 'selected' : ''}>Nha Trang (Khánh Hòa)</option>
-                            <option value="Đà Nẵng" ${selectedFrom == 'Đà Nẵng' ? 'selected' : ''}>Đà Nẵng</option>
-                            <option value="Hà Nội" ${selectedFrom == 'Hà Nội' ? 'selected' : ''}>Hà Nội</option>
+                            <c:choose>
+                                <c:when test="${not empty locationList}">
+                                    <c:forEach items="${locationList}" var="loc">
+                                        <option value="${loc.name}" ${selectedFrom == loc.name ? 'selected' : ''}>${loc.name}</option>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <option value="TP. Hồ Chí Minh" ${selectedFrom == 'TP. Hồ Chí Minh' ? 'selected' : ''}>TP. Hồ Chí Minh</option>
+                                    <option value="Cần Thơ" ${selectedFrom == 'Cần Thơ' ? 'selected' : ''}>Cần Thơ</option>
+                                    <option value="Kiên Giang" ${selectedFrom == 'Kiên Giang' ? 'selected' : ''}>Kiên Giang</option>
+                                    <option value="An Giang" ${selectedFrom == 'An Giang' ? 'selected' : ''}>An Giang</option>
+                                    <option value="Cà Mau" ${selectedFrom == 'Cà Mau' ? 'selected' : ''}>Cà Mau</option>
+                                    <option value="Bạc Liêu" ${selectedFrom == 'Bạc Liêu' ? 'selected' : ''}>Bạc Liêu</option>
+                                    <option value="Sóc Trăng" ${selectedFrom == 'Sóc Trăng' ? 'selected' : ''}>Sóc Trăng</option>
+                                    <option value="Đồng Tháp" ${selectedFrom == 'Đồng Tháp' ? 'selected' : ''}>Đồng Tháp</option>
+                                    <option value="Bến Tre" ${selectedFrom == 'Bến Tre' ? 'selected' : ''}>Bến Tre</option>
+                                    <option value="Vĩnh Long" ${selectedFrom == 'Vĩnh Long' ? 'selected' : ''}>Vĩnh Long</option>
+                                    <option value="Tiền Giang" ${selectedFrom == 'Tiền Giang' ? 'selected' : ''}>Tiền Giang</option>
+                                    <option value="Trà Vinh" ${selectedFrom == 'Trà Vinh' ? 'selected' : ''}>Trà Vinh</option>
+                                    <option value="Hậu Giang" ${selectedFrom == 'Hậu Giang' ? 'selected' : ''}>Hậu Giang</option>
+                                    <option value="Long An" ${selectedFrom == 'Long An' ? 'selected' : ''}>Long An</option>
+                                </c:otherwise>
+                            </c:choose>
                         </select>
                     </div>
 
@@ -37,12 +54,29 @@
                         </label>
                         <select name="to" class="form-select form-select-sm">
                             <option value="">-- Tất cả điểm đến --</option>
-                            <option value="Cần Thơ" ${selectedTo == 'Cần Thơ' ? 'selected' : ''}>Cần Thơ</option>
-                            <option value="TP.HCM" ${selectedTo == 'TP.HCM' ? 'selected' : ''}>TP. Hồ Chí Minh</option>
-                            <option value="Đà Lạt" ${selectedTo == 'Đà Lạt' ? 'selected' : ''}>Đà Lạt (Lâm Đồng)</option>
-                            <option value="Nha Trang" ${selectedTo == 'Nha Trang' ? 'selected' : ''}>Nha Trang (Khánh Hòa)</option>
-                            <option value="Đà Nẵng" ${selectedTo == 'Đà Nẵng' ? 'selected' : ''}>Đà Nẵng</option>
-                            <option value="Hà Nội" ${selectedTo == 'Hà Nội' ? 'selected' : ''}>Hà Nội</option>
+                            <c:choose>
+                                <c:when test="${not empty locationList}">
+                                    <c:forEach items="${locationList}" var="loc">
+                                        <option value="${loc.name}" ${selectedTo == loc.name ? 'selected' : ''}>${loc.name}</option>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <option value="TP. Hồ Chí Minh" ${selectedTo == 'TP. Hồ Chí Minh' ? 'selected' : ''}>TP. Hồ Chí Minh</option>
+                                    <option value="Cần Thơ" ${selectedTo == 'Cần Thơ' ? 'selected' : ''}>Cần Thơ</option>
+                                    <option value="Kiên Giang" ${selectedTo == 'Kiên Giang' ? 'selected' : ''}>Kiên Giang</option>
+                                    <option value="An Giang" ${selectedTo == 'An Giang' ? 'selected' : ''}>An Giang</option>
+                                    <option value="Cà Mau" ${selectedTo == 'Cà Mau' ? 'selected' : ''}>Cà Mau</option>
+                                    <option value="Bạc Liêu" ${selectedTo == 'Bạc Liêu' ? 'selected' : ''}>Bạc Liêu</option>
+                                    <option value="Sóc Trăng" ${selectedTo == 'Sóc Trăng' ? 'selected' : ''}>Sóc Trăng</option>
+                                    <option value="Đồng Tháp" ${selectedTo == 'Đồng Tháp' ? 'selected' : ''}>Đồng Tháp</option>
+                                    <option value="Bến Tre" ${selectedTo == 'Bến Tre' ? 'selected' : ''}>Bến Tre</option>
+                                    <option value="Vĩnh Long" ${selectedTo == 'Vĩnh Long' ? 'selected' : ''}>Vĩnh Long</option>
+                                    <option value="Tiền Giang" ${selectedTo == 'Tiền Giang' ? 'selected' : ''}>Tiền Giang</option>
+                                    <option value="Trà Vinh" ${selectedTo == 'Trà Vinh' ? 'selected' : ''}>Trà Vinh</option>
+                                    <option value="Hậu Giang" ${selectedTo == 'Hậu Giang' ? 'selected' : ''}>Hậu Giang</option>
+                                    <option value="Long An" ${selectedTo == 'Long An' ? 'selected' : ''}>Long An</option>
+                                </c:otherwise>
+                            </c:choose>
                         </select>
                     </div>
 
@@ -176,20 +210,88 @@
         </c:when>
 
         <c:otherwise>
-            <!-- Khi không có chuyến nào -->
-            <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
-                <i class="bi bi-calendar-x text-warning display-3 mb-3"></i>
-                <h4 class="fw-bold">Không tìm thấy chuyến xe phù hợp!</h4>
-                <p class="text-muted mb-4">Vui lòng thử chọn lại ngày đi khác hoặc đổi điểm đi / điểm đến.</p>
-                <div>
-                    <a href="${pageContext.request.contextPath}/search" class="btn btn-outline-primary px-4 me-2">
-                        <i class="bi bi-arrow-repeat me-1"></i>Xem tất cả chuyến xe
-                    </a>
-                    <a href="${pageContext.request.contextPath}/home" class="btn btn-primary px-4">
-                        <i class="bi bi-house me-1"></i>Về Trang Chủ
-                    </a>
-                </div>
-            </div>
+            <c:choose>
+                <c:when test="${not empty transferTrips}">
+                    <!-- GỢI Ý GHÉP CHUYẾN (TV4 TÍCH HỢP) NẾU CÓ CHUYẾN TRUNG GIAN -->
+                    <div class="alert alert-info border-0 rounded-4 shadow-sm p-4 mb-4" style="background-color: #e8f4fd;">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-shuffle fs-1 text-primary"></i>
+                            <div>
+                                <h5 class="fw-bold mb-1 text-primary">Không có chuyến đi thẳng - Gợi Ý Ghép Chuyến Phù Hợp</h5>
+                                <p class="mb-0 text-muted">Chúng tôi đã tìm thấy các phương án nối chuyến trung gian (2 chặng) cho hành trình của bạn.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <c:forEach items="${transferTrips}" var="tr">
+                            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white hover-shadow transition">
+                                <div class="row align-items-center">
+                                    <div class="col-md-9">
+                                        <!-- Chặng 1 -->
+                                        <div class="d-flex align-items-center gap-3 mb-2 p-2 bg-light rounded-3">
+                                            <span class="badge bg-primary px-2 py-1">Chặng 1</span>
+                                            <div class="fw-bold text-dark">
+                                                <fmt:formatDate value="${tr.trip1Dep}" pattern="HH:mm" /> 
+                                                <span class="text-primary fw-bold">${tr.fromName}</span>
+                                                <i class="bi bi-arrow-right mx-1 text-secondary"></i>
+                                                <fmt:formatDate value="${tr.trip1Arr}" pattern="HH:mm" />
+                                                <span class="text-success fw-bold">${tr.midName} (Trung chuyển)</span>
+                                            </div>
+                                            <span class="badge bg-secondary-subtle text-dark small ms-auto">
+                                                ${tr.trip1Type} (${tr.trip1Plate})
+                                            </span>
+                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-outline-primary btn-sm fw-semibold">
+                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 1
+                                            </a>
+                                        </div>
+
+                                        <!-- Chặng 2 -->
+                                        <div class="d-flex align-items-center gap-3 p-2 bg-light rounded-3">
+                                            <span class="badge bg-success px-2 py-1">Chặng 2</span>
+                                            <div class="fw-bold text-dark">
+                                                <fmt:formatDate value="${tr.trip2Dep}" pattern="HH:mm" /> 
+                                                <span class="text-success fw-bold">${tr.midName}</span>
+                                                <i class="bi bi-arrow-right mx-1 text-secondary"></i>
+                                                <fmt:formatDate value="${tr.trip2Arr}" pattern="HH:mm" />
+                                                <span class="text-danger fw-bold">${tr.toName} (Đích đến)</span>
+                                            </div>
+                                            <span class="badge bg-secondary-subtle text-dark small ms-auto">
+                                                ${tr.trip2Type} (${tr.trip2Plate})
+                                            </span>
+                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip2Id}" class="btn btn-outline-success btn-sm fw-semibold">
+                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 2
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3 text-center border-start">
+                                        <div class="text-muted small">Tổng giá vé ước tính</div>
+                                        <div class="text-danger fw-bold fs-4">
+                                            <fmt:formatNumber value="${tr.totalPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0" />
+                                        </div>
+                                        <span class="badge bg-warning-subtle text-dark mt-1">Hành trình 2 chặng</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </c:when>
+
+                <c:otherwise>
+                    <!-- Khi hoàn toàn không có chuyến nào -->
+                    <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+                        <i class="bi bi-calendar-x text-warning display-3 mb-3"></i>
+                        <h4 class="fw-bold">Không tìm thấy chuyến xe phù hợp!</h4>
+                        <p class="text-muted mb-4">Vui lòng thử chọn lại ngày đi khác hoặc đổi điểm đi / điểm đến.</p>
+                        <div>
+                            <a href="${pageContext.request.contextPath}/search" class="btn btn-outline-primary px-4 me-2">
+                                <i class="bi bi-arrow-repeat me-1"></i>Xem tất cả chuyến xe
+                            </a>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
         </c:otherwise>
     </c:choose>
 

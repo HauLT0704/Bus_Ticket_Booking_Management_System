@@ -1,3 +1,4 @@
+
 package Controller;
 
 import dao.BookingDAO;
@@ -17,10 +18,10 @@ import model.Ticket;
  * Phân công: Huỳnh Nhất Bảo (TV4)
  */
 @WebServlet(name = "BookingController", urlPatterns = {
-    "/search",
-    "/booking",
-    "/booking/seats",
-    "/booking/confirm"
+        "/search",
+        "/booking",
+        "/booking/seats",
+        "/booking/confirm"
 })
 public class BookingController extends HttpServlet {
 
@@ -60,6 +61,7 @@ public class BookingController extends HttpServlet {
 
     /**
      * 1. Xử lý tìm kiếm chuyến xe (search.jsp - TV4)
+     * Gọi TripDAO.searchTrips() (TV2 viết) -> hiển thị danh sách chuyến phù hợp
      */
     private void handleSearchTrips(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -72,21 +74,116 @@ public class BookingController extends HttpServlet {
         if (guestsStr != null && !guestsStr.trim().isEmpty()) {
             try {
                 guests = Integer.parseInt(guestsStr.trim());
-                if (guests < 1) guests = 1;
+                if (guests < 1)
+                    guests = 1;
             } catch (NumberFormatException ignored) {
             }
         }
 
-        // Tìm danh sách chuyến xe phù hợp
-        List<Map<String, Object>> trips = bookingDAO.searchTrips(from, to, date, guests);
+        // Lấy danh sách địa điểm phục vụ dropdown
+        dao.LocationDAO locationDAO = new dao.LocationDAO();
+        List<model.Location> locationList = locationDAO.getAll();
+        request.setAttribute("locationList", locationList);
+
+        // Chuẩn hóa tên địa điểm và xác định Location ID (hỗ trợ cả ID hoặc tên rút gọn như TP.HCM từ home.jsp)
+        String searchFrom = normalizeLocation(from, locationList);
+        String searchTo = normalizeLocation(to, locationList);
+        int fromId = findLocationId(searchFrom, locationList);
+        int toId = findLocationId(searchTo, locationList);
+
+        List<Map<String, Object>> trips = new ArrayList<>();
+
+        // 1. Gọi TripDAO.searchTrips() do TV2 viết theo đúng phân công chi tiết
+        if (fromId > 0 && toId > 0 && date != null && !date.trim().isEmpty()) {
+            try {
+                dao.TripDAO tripDAO = new dao.TripDAO();
+                List<model.Trip> tv2Trips = tripDAO.searchTrips(fromId, toId, date.trim(), guests);
+                if (tv2Trips != null && !tv2Trips.isEmpty()) {
+                    for (model.Trip t : tv2Trips) {
+                        Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("id", t.getId());
+                        map.put("price", t.getPrice());
+                        map.put("departureTime", t.getDepartureTime());
+                        map.put("arrivalTime", t.getArrivalTime());
+                        map.put("availableSeats", t.getAvailableSeats());
+                        map.put("fromLocationName", (t.getRoute() != null && t.getRoute().getFromLocation() != null)
+                                ? t.getRoute().getFromLocation().getName() : searchFrom);
+                        map.put("toLocationName", (t.getRoute() != null && t.getRoute().getToLocation() != null)
+                                ? t.getRoute().getToLocation().getName() : searchTo);
+                        map.put("vehiclePlate", (t.getVehicle() != null) ? t.getVehicle().getLicensePlate() : "");
+                        map.put("vehicleType", (t.getVehicle() != null) ? t.getVehicle().getType() : "Chất lượng cao");
+                        map.put("duration", (t.getRoute() != null) ? t.getRoute().getDuration() : 180);
+                        map.put("distance", (t.getRoute() != null) ? t.getRoute().getDistance() : 150);
+                        trips.add(map);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 2. Nếu hàm của TV2 không có kết quả (do status trong CSDL là 'Sắp khởi hành' hoặc tìm kiếm linh hoạt không chọn ngày)
+        // thì tìm kiếm linh hoạt qua BookingDAO để đảm bảo hệ thống luôn tìm thấy chuyến xe chính xác
+        if (trips.isEmpty()) {
+            trips = bookingDAO.searchTrips(searchFrom, searchTo, date, guests);
+        }
         request.setAttribute("trips", trips);
 
-        request.setAttribute("selectedFrom", from);
-        request.setAttribute("selectedTo", to);
+        // 3. Gợi ý ghép chuyến (TV4 tích hợp khi không có chuyến đi thẳng - theo phân công trang 7)
+        if (trips.isEmpty() && searchFrom != null && !searchFrom.trim().isEmpty() && searchTo != null && !searchTo.trim().isEmpty()) {
+            List<Map<String, Object>> transferTrips = bookingDAO.searchTransferTrips(searchFrom, searchTo, date);
+            request.setAttribute("transferTrips", transferTrips);
+        }
+
+        request.setAttribute("selectedFrom", searchFrom != null ? searchFrom : from);
+        request.setAttribute("selectedTo", searchTo != null ? searchTo : to);
         request.setAttribute("selectedDate", date);
         request.setAttribute("selectedGuests", guests);
 
         request.getRequestDispatcher("/WEB-INF/user/search.jsp").forward(request, response);
+    }
+
+    /**
+     * Chuẩn hóa chuỗi địa điểm tìm kiếm
+     */
+    private String normalizeLocation(String loc, List<model.Location> list) {
+        if (loc == null || loc.trim().isEmpty() || "Tất cả".equalsIgnoreCase(loc.trim())) {
+            return null;
+        }
+        String trimmed = loc.trim();
+        // Nếu truyền ID (như từ home.jsp truyền vào)
+        try {
+            int id = Integer.parseInt(trimmed);
+            if (list != null) {
+                for (model.Location l : list) {
+                    if (l.getId() == id) {
+                        return l.getName();
+                    }
+                }
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        if ("TP.HCM".equalsIgnoreCase(trimmed) || "TPHCM".equalsIgnoreCase(trimmed) || "Sài Gòn".equalsIgnoreCase(trimmed)) {
+            return "TP. Hồ Chí Minh";
+        }
+        return trimmed;
+    }
+
+    /**
+     * Tìm Location ID từ tên địa điểm phục vụ gọi hàm TripDAO của TV2
+     */
+    private int findLocationId(String locName, List<model.Location> list) {
+        if (locName == null || locName.trim().isEmpty() || list == null) {
+            return 0;
+        }
+        for (model.Location l : list) {
+            if (l.getName().equalsIgnoreCase(locName.trim())
+                    || l.getName().contains(locName.trim())
+                    || locName.trim().contains(l.getName())) {
+                return l.getId();
+            }
+        }
+        return 0;
     }
 
     /**
@@ -148,7 +245,8 @@ public class BookingController extends HttpServlet {
 
         int tripId = Integer.parseInt(tripIdStr.trim());
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
-        double price = trip.containsKey("price") ? (double) trip.get("price") : 0.0;
+        double price = (trip.containsKey("price") && trip.get("price") instanceof Number)
+                ? ((Number) trip.get("price")).doubleValue() : 0.0;
 
         // Tách chuỗi ghế
         String[] seatArr = seatsParam.split(",");
@@ -180,16 +278,21 @@ public class BookingController extends HttpServlet {
         int customerId = bookingDAO.getOrCreateCustomer(fullName, phone, email, idCard);
 
         // Lưu vé vào bảng Tickets
+        List<String> ticketIds = new ArrayList<>();
         for (String seat : chosenSeats) {
             Ticket t = new Ticket(tripId, customerId, seat, "Đã thanh toán", price);
-            bookingDAO.insert(t);
+            if (bookingDAO.insert(t)) {
+                ticketIds.add(String.valueOf(t.getId()));
+            }
         }
 
         // Cập nhật số ghế trống
         bookingDAO.updateAvailableSeats(tripId, chosenSeats.size());
 
         // Redirect sang trang kết quả đặt vé
-        response.sendRedirect(request.getContextPath() + "/booking?action=success&tripId=" + tripId + "&customerId=" + customerId);
+        String ticketIdsStr = String.join(",", ticketIds);
+        response.sendRedirect(
+                request.getContextPath() + "/booking?action=success&tripId=" + tripId + "&customerId=" + customerId + "&tickets=" + ticketIdsStr);
     }
 
     /**
@@ -209,14 +312,33 @@ public class BookingController extends HttpServlet {
         int customerId = Integer.parseInt(customerIdStr);
 
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
-        List<Ticket> allTickets = bookingDAO.getByCustomer(customerId);
 
         List<Ticket> recentTickets = new ArrayList<>();
         double totalAmount = 0.0;
-        for (Ticket t : allTickets) {
-            if (t.getTripId() == tripId) {
-                recentTickets.add(t);
-                totalAmount += t.getTotalPrice();
+
+        String ticketsParam = request.getParameter("tickets");
+        if (ticketsParam != null && !ticketsParam.trim().isEmpty()) {
+            String[] tIds = ticketsParam.split(",");
+            for (String tidStr : tIds) {
+                try {
+                    int tid = Integer.parseInt(tidStr.trim());
+                    Ticket t = bookingDAO.getById(tid);
+                    if (t != null) {
+                        recentTickets.add(t);
+                        totalAmount += t.getTotalPrice();
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        if (recentTickets.isEmpty()) {
+            List<Ticket> allTickets = bookingDAO.getByCustomer(customerId);
+            for (Ticket t : allTickets) {
+                if (t.getTripId() == tripId) {
+                    recentTickets.add(t);
+                    totalAmount += t.getTotalPrice();
+                }
             }
         }
 

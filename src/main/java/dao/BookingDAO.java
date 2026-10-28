@@ -215,13 +215,11 @@ public class BookingDAO extends DBContext {
 
         List<Object> params = new ArrayList<>();
         if (from != null && !from.trim().isEmpty() && !"Tất cả".equalsIgnoreCase(from.trim())) {
-            sql.append(" AND (fl.Name LIKE ? OR fl.Province LIKE ?) ");
-            params.add("%" + from.trim() + "%");
+            sql.append(" AND fl.Name LIKE ? ");
             params.add("%" + from.trim() + "%");
         }
         if (to != null && !to.trim().isEmpty() && !"Tất cả".equalsIgnoreCase(to.trim())) {
-            sql.append(" AND (tl.Name LIKE ? OR tl.Province LIKE ?) ");
-            params.add("%" + to.trim() + "%");
+            sql.append(" AND tl.Name LIKE ? ");
             params.add("%" + to.trim() + "%");
         }
         if (date != null && !date.trim().isEmpty()) {
@@ -253,6 +251,87 @@ public class BookingDAO extends DBContext {
                 map.put("duration", rs.getInt("Duration"));
                 map.put("vehiclePlate", rs.getString("LicensePlate"));
                 map.put("vehicleType", rs.getString("VehicleType"));
+                list.add(map);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Tìm các cặp chuyến xe ghép (nối chuyến) khi không có chuyến đi thẳng (TV4 tích hợp)
+     */
+    public List<Map<String, Object>> searchTransferTrips(String from, String to, String date) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (from == null || from.trim().isEmpty() || to == null || to.trim().isEmpty()) {
+            return list;
+        }
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT t1.Id AS Trip1_Id, t1.DepartureTime AS Trip1_Dep, t1.ArrivalTime AS Trip1_Arr, \n"
+                + "       t1.Price AS Trip1_Price, t1.AvailableSeats AS Trip1_Seats, \n"
+                + "       v1.LicensePlate AS Trip1_Plate, v1.Type AS Trip1_Type, \n"
+                + "       fl1.Name AS FromName, tl1.Name AS MidName, \n"
+                + "       t2.Id AS Trip2_Id, t2.DepartureTime AS Trip2_Dep, t2.ArrivalTime AS Trip2_Arr, \n"
+                + "       t2.Price AS Trip2_Price, t2.AvailableSeats AS Trip2_Seats, \n"
+                + "       v2.LicensePlate AS Trip2_Plate, v2.Type AS Trip2_Type, \n"
+                + "       tl2.Name AS ToName, \n"
+                + "       (t1.Price + t2.Price) AS TotalPrice \n"
+                + "FROM Trips t1 \n"
+                + "JOIN Routes r1 ON t1.RouteId = r1.Id \n"
+                + "JOIN Locations fl1 ON r1.FromLocationId = fl1.Id \n"
+                + "JOIN Locations tl1 ON r1.ToLocationId = tl1.Id \n"
+                + "JOIN Vehicles v1 ON t1.VehicleId = v1.Id \n"
+                + "JOIN Routes r2 ON tl1.Id = r2.FromLocationId \n"
+                + "JOIN Trips t2 ON t2.RouteId = r2.Id \n"
+                + "JOIN Locations tl2 ON r2.ToLocationId = tl2.Id \n"
+                + "JOIN Vehicles v2 ON t2.VehicleId = v2.Id \n"
+                + "WHERE fl1.Name LIKE ? AND tl2.Name LIKE ? \n"
+                + "  AND t1.AvailableSeats > 0 AND t2.AvailableSeats > 0 \n"
+                + "  AND t2.DepartureTime >= DATEADD(MINUTE, 30, t1.ArrivalTime) \n"
+                + "  AND t2.DepartureTime <= DATEADD(HOUR, 8, t1.ArrivalTime) \n"
+        );
+
+        List<Object> params = new ArrayList<>();
+        params.add("%" + from.trim() + "%");
+        params.add("%" + to.trim() + "%");
+
+        if (date != null && !date.trim().isEmpty()) {
+            sql.append("  AND CONVERT(VARCHAR(10), t1.DepartureTime, 120) = ? \n");
+            params.add(date.trim());
+        }
+
+        sql.append(" ORDER BY t1.DepartureTime ASC");
+
+        try {
+            PreparedStatement ps = getConnection().prepareStatement(sql.toString());
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("trip1Id", rs.getInt("Trip1_Id"));
+                map.put("trip1Dep", rs.getTimestamp("Trip1_Dep"));
+                map.put("trip1Arr", rs.getTimestamp("Trip1_Arr"));
+                map.put("trip1Price", rs.getDouble("Trip1_Price"));
+                map.put("trip1Seats", rs.getInt("Trip1_Seats"));
+                map.put("trip1Plate", rs.getString("Trip1_Plate"));
+                map.put("trip1Type", rs.getString("Trip1_Type"));
+                map.put("fromName", rs.getString("FromName"));
+                map.put("midName", rs.getString("MidName"));
+
+                map.put("trip2Id", rs.getInt("Trip2_Id"));
+                map.put("trip2Dep", rs.getTimestamp("Trip2_Dep"));
+                map.put("trip2Arr", rs.getTimestamp("Trip2_Arr"));
+                map.put("trip2Price", rs.getDouble("Trip2_Price"));
+                map.put("trip2Seats", rs.getInt("Trip2_Seats"));
+                map.put("trip2Plate", rs.getString("Trip2_Plate"));
+                map.put("trip2Type", rs.getString("Trip2_Type"));
+                map.put("toName", rs.getString("ToName"));
+
+                map.put("totalPrice", rs.getDouble("TotalPrice"));
                 list.add(map);
             }
         } catch (Exception e) {
