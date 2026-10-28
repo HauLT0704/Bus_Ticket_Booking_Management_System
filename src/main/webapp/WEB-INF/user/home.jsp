@@ -1,7 +1,6 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
-
 <%@include file="/WEB-INF/common/header.jsp" %>
 
 <div class="container mt-5 mb-5">
@@ -12,7 +11,6 @@
         Search and book bus tickets quickly and easily.
     </p>
 
-    <!-- SEARCH FORM -->
     <div class="card shadow-sm mb-4">
 
         <div class="card-header bg-primary text-white">
@@ -21,9 +19,10 @@
 
         <div class="card-body">
 
-            <form id="searchForm" method="GET">
+            <form id="searchForm"
+                  action="${pageContext.request.contextPath}/transfer"
+                  method="GET">
 
-                <!-- SEARCH MODE -->
                 <div class="d-flex flex-wrap gap-4 mb-4">
 
                     <div class="form-check">
@@ -32,10 +31,9 @@
                                id="directMode"
                                name="searchMode"
                                value="direct"
-                               checked>
+                               <c:if test="${param.mode != 'transfer'}">checked</c:if>>
 
-                        <label class="form-check-label"
-                               for="directMode">
+                        <label class="form-check-label" for="directMode">
                             Direct Trips
                         </label>
                     </div>
@@ -45,110 +43,92 @@
                                class="form-check-input"
                                id="transferMode"
                                name="searchMode"
-                               value="transfer">
+                               value="transfer"
+                               <c:if test="${param.mode == 'transfer'}">checked</c:if>>
 
-                        <label class="form-check-label"
-                               for="transferMode">
+                        <label class="form-check-label" for="transferMode">
                             Transfer Trips (Ghép chuyến)
                         </label>
                     </div>
 
                 </div>
 
-                <!-- SEARCH FIELDS -->
                 <div class="row g-3 align-items-end">
 
-                    <!-- DEPARTURE -->
                     <div class="col-md-3">
-
                         <label for="from" class="form-label">
                             Departure
                         </label>
 
                         <select id="from"
+                                name="fromId"
                                 class="form-select"
                                 required>
 
-                            <option value="">
-                                Select departure
-                            </option>
+                            <option value="">Select departure</option>
 
-                            <c:forEach var="location"
-                                       items="${locations}">
-
-                                <option value="${location.id}"
-                                        data-search="${location.name}">
+                            <c:forEach var="location" items="${locations}">
+                                <option value="${location.id}">
                                     <c:out value="${location.name}"/>
                                 </option>
-
                             </c:forEach>
 
                         </select>
                     </div>
 
-                    <!-- DESTINATION -->
                     <div class="col-md-3">
-
                         <label for="to" class="form-label">
                             Destination
                         </label>
 
                         <div class="input-group">
-
                             <select id="to"
+                                    name="toId"
                                     class="form-select"
                                     required>
 
-                                <option value="">
-                                    Select destination
-                                </option>
+                                <option value="">Select destination</option>
 
-                                <c:forEach var="location"
-                                           items="${locations}">
-
-                                    <option value="${location.id}"
-                                            data-search="${location.name}">
+                                <c:forEach var="location" items="${locations}">
+                                    <option value="${location.id}">
                                         <c:out value="${location.name}"/>
                                     </option>
-
                                 </c:forEach>
 
                             </select>
 
                             <button type="button"
-                                    id="swapButton"
                                     class="btn btn-outline-primary"
+                                    onclick="swapLocations()"
                                     title="Swap departure and destination"
                                     aria-label="Swap departure and destination">
 
                                 <i class="bi bi-arrow-left-right"></i>
                             </button>
-
                         </div>
                     </div>
 
-                    <!-- DEPARTURE DATE -->
                     <div class="col-md-2">
-
                         <label for="date" class="form-label">
                             Departure Date
                         </label>
 
                         <input type="date"
                                id="date"
+                               name="date"
                                class="form-control"
+                               min="${today}"
                                required>
                     </div>
 
-                    <!-- PASSENGERS -->
                     <div class="col-md-1">
-
                         <label for="guests" class="form-label">
                             Guests
                         </label>
 
                         <input type="number"
                                id="guests"
+                               name="guests"
                                class="form-control"
                                min="1"
                                max="10"
@@ -156,20 +136,18 @@
                                required>
                     </div>
 
-                    <!-- BUTTONS -->
                     <div class="col-md-3">
-
                         <div class="d-flex gap-2">
 
                             <button type="submit"
-                                    class="btn btn-warning flex-grow-1">
+                                    class="btn btn-warning flex-grow-1"
+                                    onclick="return prepareSearch()">
 
                                 <i class="bi bi-search me-1"></i>
                                 Search Trips
                             </button>
 
-                            <button type="button"
-                                    id="resetButton"
+                            <button type="reset"
                                     class="btn btn-outline-secondary"
                                     title="Reset search"
                                     aria-label="Reset search">
@@ -182,151 +160,80 @@
 
                 </div>
 
-                <!-- ERROR MESSAGE -->
-                <div id="searchError"
-                     class="alert alert-danger mt-3 mb-0 d-none"
-                     role="alert">
-                </div>
+                <input type="hidden"
+                       id="directFrom"
+                       name="from"
+                       disabled>
+
+                <input type="hidden"
+                       id="directTo"
+                       name="to"
+                       disabled>
 
             </form>
-
         </div>
     </div>
-
 </div>
 
 <script>
-    const searchForm = document.getElementById("searchForm");
-    const fromSelect = document.getElementById("from");
-    const toSelect = document.getElementById("to");
-    const dateInput = document.getElementById("date");
-    const guestsInput = document.getElementById("guests");
-    const searchError = document.getElementById("searchError");
+    function swapLocations() {
+        var from = document.getElementById("from");
+        var to = document.getElementById("to");
 
-    const contextPath = "${pageContext.request.contextPath}";
+        var temp = from.value;
 
-    // GET TODAY IN LOCAL TIME
-    function getToday() {
-        const now = new Date();
-
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, "0");
-        const day = String(now.getDate()).padStart(2, "0");
-
-        return year + "-" + month + "-" + day;
+        from.value = to.value;
+        to.value = temp;
     }
 
-    // SHOW ERROR
-    function showError(message) {
-        searchError.textContent = message;
-        searchError.classList.remove("d-none");
-    }
+    function prepareSearch() {
+        var form = document.getElementById("searchForm");
+        var from = document.getElementById("from");
+        var to = document.getElementById("to");
+        var date = document.getElementById("date");
+        var guests = document.getElementById("guests");
 
-    // CLEAR ERROR
-    function clearError() {
-        searchError.textContent = "";
-        searchError.classList.add("d-none");
-    }
-
-    // DISABLE PAST DATES
-    dateInput.min = getToday();
-
-    // SWAP DEPARTURE AND DESTINATION
-    document.getElementById("swapButton")
-            .addEventListener("click", function () {
-
-                const temp = fromSelect.value;
-                fromSelect.value = toSelect.value;
-                toSelect.value = temp;
-
-                clearError();
-            });
-
-    // RESET SEARCH FORM
-    document.getElementById("resetButton")
-            .addEventListener("click", function () {
-
-                searchForm.reset();
-
-                dateInput.min = getToday();
-
-                clearError();
-            });
-
-    // SEARCH SUBMIT
-    searchForm.addEventListener("submit", function (e) {
-
-        e.preventDefault();
-
-        clearError();
-
-        const from = fromSelect.value;
-        const to = toSelect.value;
-        const date = dateInput.value;
-        const guests = Number(guestsInput.value);
-
-        // VALIDATE REQUIRED FIELDS
-        if (!from || !to || !date) {
-            showError("Please enter all search information.");
-            return;
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return false;
         }
 
-        // VALIDATE LOCATIONS
-        if (from === to) {
-            showError("Departure and destination must be different.");
-            return;
+        if (from.value === to.value) {
+            alert("Departure and destination must be different.");
+            return false;
         }
 
-        // VALIDATE DATE
-        if (date < getToday()) {
-            showError("Departure date cannot be in the past.");
-            return;
+        if (date.value < date.min) {
+            alert("Departure date cannot be in the past.");
+            return false;
         }
 
-        // VALIDATE PASSENGERS
-        if (!Number.isInteger(guests)
-                || guests < 1
-                || guests > 10) {
+        var directFrom = document.getElementById("directFrom");
+        var directTo = document.getElementById("directTo");
 
-            showError("Guests must be between 1 and 10.");
-            return;
-        }
+        if (document.getElementById("transferMode").checked) {
+            form.action = "${pageContext.request.contextPath}/transfer";
 
-        const transfer =
-                document.getElementById("transferMode").checked;
+            from.name = "fromId";
+            to.name = "toId";
 
-        const params = new URLSearchParams();
-
-        if (transfer) {
-
-            // TRANSFER CONTROLLER: Location IDs
-            params.set("fromId", from);
-            params.set("toId", to);
-
+            directFrom.disabled = true;
+            directTo.disabled = true;
         } else {
+            form.action = "${pageContext.request.contextPath}/search";
 
-            // BOOKING CONTROLLER: Location names
-            params.set(
-                    "from",
-                    fromSelect.selectedOptions[0].text.trim()
-            );
+            directFrom.value = from.options[from.selectedIndex].text;
+            directTo.value = to.options[to.selectedIndex].text;
 
-            params.set(
-                    "to",
-                    toSelect.selectedOptions[0].text.trim()
-            );
+            directFrom.disabled = false;
+            directTo.disabled = false;
+
+            from.removeAttribute("name");
+            to.removeAttribute("name");
         }
 
-        // COMMON PARAMETERS
-        params.set("date", date);
-        params.set("guests", String(guests));
-
-        // ROUTE TO EXISTING SERVLET
-        const path = transfer ? "/transfer" : "/search";
-
-        window.location.href =
-                contextPath + path + "?" + params.toString();
-    });
+        return true;
+    }
 </script>
 
 <%@include file="/WEB-INF/common/footer.jsp" %>
