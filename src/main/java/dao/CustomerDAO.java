@@ -37,7 +37,7 @@ public class CustomerDAO extends DBContext {
         return list;
     }
 
-   // 2. Lấy khách hàng theo ID (dùng cho chức năng Sửa)
+    // 2. Lấy khách hàng theo ID (dùng cho chức năng Sửa)
     public Customer getCustomerById(int id) {
         String sql = "SELECT * FROM Customers WHERE Id = ?";
         try {
@@ -47,11 +47,11 @@ public class CustomerDAO extends DBContext {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return new Customer(
-                    rs.getInt("Id"),
-                    rs.getNString("FullName"),
-                    rs.getString("Phone"),
-                    rs.getString("Email"),
-                    rs.getString("IdCard")
+                        rs.getInt("Id"),
+                        rs.getNString("FullName"),
+                        rs.getString("Phone"),
+                        rs.getString("Email"),
+                        rs.getString("IdCard")
                 );
             }
         } catch (Exception e) {
@@ -104,5 +104,27 @@ public class CustomerDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Customer findByPhone(String phone) {
+        String query = "SELECT * FROM Customers WHERE phone = ?";
+        try (Connection conn = new DBContext().getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setString(1, phone);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Customer customer = new Customer();
+                    customer.setId(rs.getInt("id"));
+                    customer.setFullName(rs.getString("full_name")); // Kiểm tra tên cột cho khớp với DB của bạn
+                    customer.setPhone(rs.getString("phone"));
+                    customer.setEmail(rs.getString("email"));
+                    customer.setIdCard(rs.getString("id_card"));
+                    return customer;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

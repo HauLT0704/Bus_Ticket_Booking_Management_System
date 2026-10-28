@@ -63,7 +63,7 @@ public class AuthController extends HttpServlet {
                 session.setAttribute("currentUser", user);
                 
                 if (user.isAdmin()) {
-                    response.sendRedirect(request.getContextPath() + "/admin/location");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                 } else {
                     response.sendRedirect(request.getContextPath() + "/home");
                 }

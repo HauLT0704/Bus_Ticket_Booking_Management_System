@@ -17,12 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  *
  * @author Hứa Hạo Danh (TV5)
  */
-
 @WebServlet(name = "ReportController", urlPatterns = {"/report", "/print-ticket"})
 public class ReportController extends HttpServlet {
 
@@ -30,41 +28,51 @@ public class ReportController extends HttpServlet {
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
-         String path = request.getServletPath();
+        String path = request.getServletPath();
 
-    if ("/print-ticket".equals(path)) {
-        String ticketIdValue = request.getParameter("id");
+        if ("/print-ticket".equals(path)) {
+            String ticketIdValue = request.getParameter("id");
 
-        if (ticketIdValue == null || ticketIdValue.trim().isEmpty()) {
-            response.sendError(
-                HttpServletResponse.SC_BAD_REQUEST,
-                "Vui long cung cap ma ve!"
-            );
+            if (ticketIdValue == null || ticketIdValue.trim().isEmpty()) {
+                response.sendError(
+                        HttpServletResponse.SC_BAD_REQUEST,
+                        "Vui long cung cap ma ve!"
+                );
+                return;
+            }
+
+            int ticketId;
+
+            try {
+                ticketId = Integer.parseInt(ticketIdValue);
+            } catch (NumberFormatException e) {
+                response.sendError(
+                        HttpServletResponse.SC_BAD_REQUEST,
+                        "Ma ve khong hop le!"
+                );
+                return;
+            }
+
+            ReportDAO dao = new ReportDAO();
+
+            Map<String, Object> ticket = dao.getTicketDetails(ticketId);
+
+            if (ticket == null) {
+                response.sendError(
+                        HttpServletResponse.SC_NOT_FOUND,
+                        "Khong tim thay ve co ma " + ticketId
+                );
+                return;
+            }
+
+            request.setAttribute("ticket", ticket);
+
+            request.getRequestDispatcher(
+                    "/WEB-INF/user/print-ticket.jsp"
+            ).forward(request, response);
+
             return;
         }
-
-        int ticketId;
-
-        try {
-            ticketId = Integer.parseInt(ticketIdValue);
-        } catch (NumberFormatException e) {
-            response.sendError(
-                HttpServletResponse.SC_BAD_REQUEST,
-                "Ma ve khong hop le!"
-            );
-            return;
-        }
-
-        // TODO: Goi DAO lay thong tin ve theo ticketId
-        // Neu khong tim thay ve, thong bao loi.
-        // Neu tim thay ve:
-        // request.setAttribute("ticket", ticket);
-        // request.getRequestDispatcher(
-        //     "/WEB-INF/admin/print-ticket.jsp"
-        // ).forward(request, response);
-
-        return;
-    }
 
         LocalDate today = LocalDate.now();
 
