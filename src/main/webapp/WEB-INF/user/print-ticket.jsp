@@ -1,44 +1,16 @@
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 <%@taglib prefix="fmt" uri="jakarta.tags.fmt"%>
 <%@include file="/WEB-INF/common/header.jsp" %>
 
-<style>
-    .ticket {
-        max-width: 750px;
-        margin: 30px auto;
-        background: white;
-        border: 2px dashed #0d6efd;
-        border-radius: 16px;
-        padding: 30px;
-    }
-
-    @media print {
-        nav, footer, .no-print {
-            display: none !important;
-        }
-
-        body {
-            background: white !important;
-        }
-
-        .ticket {
-            margin: 0 auto;
-            border: 1px dashed #333;
-            box-shadow: none;
-        }
-    }
-</style>
-
 <div class="container py-4">
-    <div class="ticket">
+    <div class="card border-2 border-primary rounded-4 p-4 mx-auto my-3 bg-white shadow-sm" style="max-width: 750px;">
         <div class="text-center mb-4">
             <h3 class="text-primary fw-bold">
                 <i class="bi bi-bus-front"></i>
                 VÉ XE KHÁCH
             </h3>
-            <p class="text-muted">BUS TICKET BOOKING</p>
+            <p class="text-muted mb-0">BUS TICKET BOOKING</p>
         </div>
 
         <hr>
@@ -111,7 +83,7 @@
 
                 <hr>
 
-                <p class="text-center text-muted">
+                <p class="text-center text-muted mb-0">
                     Vui lòng có mặt trước giờ khởi hành.
                     Chúc quý khách thượng lộ bình an!
                 </p>
@@ -125,7 +97,7 @@
         </c:choose>
     </div>
 
-    <div class="text-center no-print">
+    <div class="text-center d-print-none mt-3">
         <button class="btn btn-primary"
                 onclick="window.print()">
             <i class="bi bi-printer"></i> In vé

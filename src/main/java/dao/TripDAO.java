@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
 import db.DBContext;
@@ -18,18 +14,25 @@ import model.Trip;
 import model.Vehicle;
 
 /**
- *
- * @author Nguyễn Tấn Phát (TV2)
+ * Phân công: Nguyễn Tấn Phát (TV2)
  */
 public class TripDAO extends DBContext {
 
-    //C
+    // C - Tạo chuyến xe mới
     public int create(Trip trip) {
         try {
             String sql = "INSERT INTO Trips (RouteId, VehicleId, DepartureTime, ArrivalTime, AvailableSeats, Price, Status) VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
-            ps.setInt(1, trip.getRoute() != null ? trip.getRoute().getId() : 0);
-            ps.setInt(2, trip.getVehicle() != null ? trip.getVehicle().getId() : 0);
+            int routeId = 0;
+            if (trip.getRoute() != null) {
+                routeId = trip.getRoute().getId();
+            }
+            int vehicleId = 0;
+            if (trip.getVehicle() != null) {
+                vehicleId = trip.getVehicle().getId();
+            }
+            ps.setInt(1, routeId);
+            ps.setInt(2, vehicleId);
             ps.setTimestamp(3, trip.getDepartureTime());
             ps.setTimestamp(4, trip.getArrivalTime());
             ps.setInt(5, trip.getAvailableSeats());
@@ -42,7 +45,7 @@ public class TripDAO extends DBContext {
         return 0;
     }
 
-    //R
+    // R - Lấy danh sách tất cả chuyến xe
     public List<Trip> getList() {
         List<Trip> result = new ArrayList<>();
         try {
@@ -55,12 +58,11 @@ public class TripDAO extends DBContext {
                     + "JOIN Routes r ON t.RouteId = r.Id "
                     + "JOIN Locations l1 ON r.FromLocationId = l1.Id "
                     + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
-                    + "ORDER BY t.Id";
+                    + "ORDER BY t.Id DESC";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                // Xây dựng đối tượng lồng nhau
                 Vehicle vehicle = new Vehicle();
                 vehicle.setId(rs.getInt("VehicleId"));
                 vehicle.setLicensePlate(rs.getString("LicensePlate"));
@@ -133,7 +135,7 @@ public class TripDAO extends DBContext {
         return null;
     }
 
-// Hàm searchTrips theo mô hình đối tượng lồng nhau (cho thành viên thứ 4 gọi)
+    // Hàm searchTrips theo mô hình đối tượng lồng nhau (cho thành viên thứ 4 gọi)
     public List<Trip> searchTrips(int fromLocationId, int toLocationId, String date, int guests) {
         List<Trip> result = new ArrayList<>();
         try {
@@ -148,14 +150,14 @@ public class TripDAO extends DBContext {
                     + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
                     + "WHERE r.FromLocationId = ? AND r.ToLocationId = ? "
                     + "AND CAST(t.DepartureTime AS DATE) = ? "
-                    + "AND t.AvailableSeats >= ? AND t.Status = ?";
+                    + "AND t.AvailableSeats >= ? "
+                    + "AND (t.Status != N'Đã hủy' AND t.Status != N'Hoàn thành')";
 
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
             ps.setInt(1, fromLocationId);
             ps.setInt(2, toLocationId);
             ps.setString(3, date);
             ps.setInt(4, guests);
-            ps.setString(5, "Active");
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -195,13 +197,21 @@ public class TripDAO extends DBContext {
         return result;
     }
 
-    //U
+    // U - Cập nhật chuyến xe
     public void update(Trip trip) {
         try {
             String sql = "UPDATE Trips SET RouteId = ?, VehicleId = ?, DepartureTime = ?, ArrivalTime = ?, AvailableSeats = ?, Price = ?, Status = ? WHERE Id = ?";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
-            ps.setInt(1, trip.getRoute() != null ? trip.getRoute().getId() : 0);
-            ps.setInt(2, trip.getVehicle() != null ? trip.getVehicle().getId() : 0);
+            int routeId = 0;
+            if (trip.getRoute() != null) {
+                routeId = trip.getRoute().getId();
+            }
+            int vehicleId = 0;
+            if (trip.getVehicle() != null) {
+                vehicleId = trip.getVehicle().getId();
+            }
+            ps.setInt(1, routeId);
+            ps.setInt(2, vehicleId);
             ps.setTimestamp(3, trip.getDepartureTime());
             ps.setTimestamp(4, trip.getArrivalTime());
             ps.setInt(5, trip.getAvailableSeats());
@@ -214,25 +224,27 @@ public class TripDAO extends DBContext {
         }
     }
 
-    //D
-    public void delete(int id) {
+    // D - Xóa chuyến xe
+    public boolean delete(int id) {
         try {
             String sql = "DELETE FROM Trips WHERE Id = ?";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
             ps.setInt(1, id);
-
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                return true;
+            }
         } catch (SQLException ex) {
             Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return false;
     }
-    
-    
-    // Ham phu tro
+
+    // Hàm phụ trợ
     public List<Route> getAllRoutes() {
         List<Route> list = new ArrayList<>();
         try {
-            String sql = "SELECT r.Id, l1.Id AS FromId, l1.Name AS FromName, l2.Id AS ToId, l2.Name AS ToName "
+            String sql = "SELECT r.Id, r.Distance, l1.Id AS FromId, l1.Name AS FromName, l2.Id AS ToId, l2.Name AS ToName "
                     + "FROM Routes r "
                     + "JOIN Locations l1 ON r.FromLocationId = l1.Id "
                     + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
@@ -245,6 +257,7 @@ public class TripDAO extends DBContext {
 
                 Route route = new Route();
                 route.setId(rs.getInt("Id"));
+                route.setDistance(rs.getDouble("Distance"));
                 route.setFromLocation(fromLoc);
                 route.setToLocation(toLoc);
                 list.add(route);
@@ -258,18 +271,37 @@ public class TripDAO extends DBContext {
     public List<Vehicle> getAllVehicles() {
         List<Vehicle> list = new ArrayList<>();
         try {
-            String sql = "SELECT Id, LicensePlate FROM Vehicles ORDER BY Id";
+            String sql = "SELECT Id, LicensePlate, TotalSeats, Type, Status FROM Vehicles ORDER BY Id";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Vehicle vehicle = new Vehicle();
                 vehicle.setId(rs.getInt("Id"));
                 vehicle.setLicensePlate(rs.getString("LicensePlate"));
+                vehicle.setTotalSeats(rs.getInt("TotalSeats"));
+                vehicle.setType(rs.getString("Type"));
+                vehicle.setStatus(rs.getString("Status"));
                 list.add(vehicle);
             }
         } catch (SQLException ex) {
             Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return list;
+    }
+
+    // Lấy tổng số ghế tối đa của chiếc xe được chọn
+    public int getVehicleMaxSeats(int vehicleId) {
+        try {
+            String sql = "SELECT TotalSeats FROM Vehicles WHERE Id = ?";
+            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+            ps.setInt(1, vehicleId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("TotalSeats");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 59;
     }
 }

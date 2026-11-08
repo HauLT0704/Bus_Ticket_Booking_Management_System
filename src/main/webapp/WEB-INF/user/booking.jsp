@@ -1,4 +1,4 @@
-<%@ page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ include file="/WEB-INF/common/header.jsp" %>
@@ -8,13 +8,23 @@
         <div class="col-lg-8">
 
             <!-- THÔNG BÁO THÀNH CÔNG -->
-            <div class="text-center mb-4">
+            <div class="text-center mb-4 d-print-none">
                 <div class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle mb-3 shadow" style="width: 70px; height: 70px;">
                     <i class="bi bi-check-lg display-6"></i>
                 </div>
                 <h3 class="fw-bold text-success mb-1">Đặt Vé Thành Công!</h3>
                 <p class="text-muted small">Cảm ơn bạn đã đặt vé. Dưới đây là thông tin chi tiết vé xe của bạn.</p>
             </div>
+
+            <c:if test="${param.cancelMsg == 'success'}">
+                <div class="alert alert-danger d-flex align-items-center mb-4 shadow-sm d-print-none" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                    <div>
+                        <strong>Đã hủy vé thành công!</strong>
+                        Cảnh báo vi phạm: Bạn đã hủy <b>${param.cancelCount}/3</b> vé. Nếu hủy từ <b>3 vé trở lên</b>, tài khoản của bạn sẽ bị khóa tự động do vi phạm chính sách đặt vé!
+                    </div>
+                </div>
+            </c:if>
 
             <!-- PHIẾU VÉ ĐIỆN TỬ -->
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white" id="ticketInvoice">
@@ -64,6 +74,7 @@
                                     <th>Số ghế</th>
                                     <th>Trạng thái</th>
                                     <th>Đơn giá</th>
+                                    <th class="d-print-none">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -72,9 +83,36 @@
                                         <td>${loop.index + 1}</td>
                                         <td class="fw-semibold">#VE${ticket.id}</td>
                                         <td><span class="badge bg-primary px-3 py-2 fs-6">${ticket.seatNumber}</span></td>
-                                        <td><span class="badge bg-success-subtle text-success">${ticket.status}</span></td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${ticket.status == 'Đã hủy'}">
+                                                    <span class="badge bg-danger-subtle text-danger">${ticket.status}</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge bg-success-subtle text-success">${ticket.status}</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
                                         <td class="fw-bold">
                                             <fmt:formatNumber value="${ticket.totalPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0" />
+                                        </td>
+                                        <td class="d-print-none">
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <c:if test="${ticket.status != 'Đã hủy'}">
+                                                    <a href="${pageContext.request.contextPath}/print-ticket?id=${ticket.id}"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-printer me-1"></i>In vé
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/booking/cancel?id=${ticket.id}&tripId=${trip.id}&customerId=${ticket.customerId}&tickets=${param.tickets}"
+                                                       class="btn btn-sm btn-outline-danger"
+                                                       onclick="return confirm('Bạn có chắc chắn muốn hủy vé #VE${ticket.id} (Ghế ${ticket.seatNumber}) không? Lưu ý: Hủy từ 3 vé trở lên sẽ bị khóa tài khoản!');">
+                                                        <i class="bi bi-x-circle me-1"></i>Hủy vé
+                                                    </a>
+                                                </c:if>
+                                                <c:if test="${ticket.status == 'Đã hủy'}">
+                                                    <span class="text-muted small fst-italic">Đã hủy</span>
+                                                </c:if>
+                                            </div>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -82,7 +120,7 @@
                             <tfoot class="table-light">
                                 <tr>
                                     <td colspan="4" class="text-end fw-bold">Tổng thanh toán:</td>
-                                    <td class="text-danger fw-bold fs-5">
+                                    <td colspan="2" class="text-danger fw-bold fs-5">
                                         <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0" />
                                     </td>
                                 </tr>
@@ -99,7 +137,7 @@
             </div>
 
             <!-- NÚT ĐIỀU HƯỚNG -->
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center d-print-none">
                 <a href="${pageContext.request.contextPath}/home" class="btn btn-outline-secondary px-4 py-2">
                     <i class="bi bi-house me-1"></i>Về Trang Chủ
                 </a>
@@ -116,24 +154,5 @@
         </div>
     </div>
 </div>
-
-<style>
-    @media print {
-        body * {
-            visibility: hidden;
-        }
-        #ticketInvoice, #ticketInvoice * {
-            visibility: visible;
-        }
-        #ticketInvoice {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            border: 1px solid #000 !important;
-            box-shadow: none !important;
-        }
-    }
-</style>
 
 <%@ include file="/WEB-INF/common/footer.jsp" %>

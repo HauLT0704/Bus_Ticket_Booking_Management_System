@@ -113,11 +113,19 @@ public class Trip {
 
     // 1. Hàm lấy ID phụ trợ (để phòng khi code cũ cần gọi)
     public int getRouteId() {
-        return (route != null) ? route.getId() : 0;
+        if (route != null) {
+            return route.getId();
+        } else {
+            return 0;
+        }
     }
 
     public int getVehicleId() {
-        return (vehicle != null) ? vehicle.getId() : 0;
+        if (vehicle != null) {
+            return vehicle.getId();
+        } else {
+            return 0;
+        }
     }
 
     // 2. Hai hàm hiển thị ngắn gọn

@@ -1,93 +1,15 @@
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 <%@taglib prefix="fmt" uri="jakarta.tags.fmt"%>
 
 <%@include file="/WEB-INF/common/header.jsp" %>
 
-<style>
-    .report-title {
-        color: #17365d;
-    }
-
-    .report-card {
-        border: none;
-        border-radius: 14px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
-    }
-
-    .report-icon {
-        width: 48px;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        background: #e7f1ff;
-        color: #0d6efd;
-        font-size: 24px;
-    }
-
-    .table thead th {
-        background: #17365d;
-        color: white;
-        white-space: nowrap;
-        padding: 14px;
-    }
-
-    .table tbody td {
-        padding: 14px;
-        vertical-align: middle;
-    }
-
-    .revenue-value {
-        color: #198754;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .filter-label {
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    @media print {
-        .no-print,
-        nav,
-        footer {
-            display: none !important;
-        }
-
-        body {
-            background: white !important;
-        }
-
-        .report-card {
-            box-shadow: none;
-            border: 1px solid #ddd;
-        }
-
-        .container {
-            max-width: 100% !important;
-        }
-
-        .table thead th {
-            background: #ddd !important;
-            color: black !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-    }
-</style>
-
 <div class="container py-4 py-lg-5">
 
-    <!-- Tieu de trang -->
-    <div class="d-flex flex-wrap justify-content-between
-                align-items-center gap-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
         <div>
-            <h2 class="fw-bold report-title mb-2">
+            <h2 class="fw-bold text-primary mb-2">
                 <i class="bi bi-bar-chart-line-fill me-2"></i>
                 Báo cáo doanh thu
             </h2>
@@ -98,14 +20,14 @@
         </div>
 
         <button type="button"
-                class="btn btn-success no-print"
+                class="btn btn-success d-print-none"
                 onclick="window.print()">
             <i class="bi bi-printer-fill me-2"></i>
             In báo cáo
         </button>
     </div>
 
-    <!-- Thong bao loi -->
+    <!-- Thông báo lỗi -->
     <c:if test="${not empty error}">
         <div class="alert alert-danger" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -113,8 +35,8 @@
         </div>
     </c:if>
 
-    <!-- Bo loc bao cao -->
-    <div class="card report-card mb-4 no-print">
+    <!-- Bộ lọc báo cáo -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 d-print-none">
         <div class="card-body p-4">
 
             <h5 class="fw-bold mb-4">
@@ -127,51 +49,47 @@
 
                 <div class="row g-3 align-items-end">
 
-                    <!-- Loai bao cao -->
+                    <!-- Loại báo cáo -->
                     <div class="col-12 col-md-6 col-lg-3">
-                        <label for="type" class="form-label filter-label">
+                        <label for="type" class="form-label fw-semibold mb-2">
                             Loại báo cáo
                         </label>
 
                         <select class="form-select" id="type" name="type"
                                 onchange="toggleFields()">
 
-                            <option value="month"
-                                ${reportType eq 'month' ? 'selected' : ''}>
+                            <option value="month" <c:if test="${reportType eq 'month'}">selected</c:if>>
                                 Theo tháng
                             </option>
 
-                            <option value="quarter"
-                                ${reportType eq 'quarter' ? 'selected' : ''}>
+                            <option value="quarter" <c:if test="${reportType eq 'quarter'}">selected</c:if>>
                                 Theo quý
                             </option>
 
-                            <option value="year"
-                                ${reportType eq 'year' ? 'selected' : ''}>
+                            <option value="year" <c:if test="${reportType eq 'year'}">selected</c:if>>
                                 Theo năm
                             </option>
                         </select>
                     </div>
 
-                    <!-- Thang -->
+                    <!-- Tháng -->
                     <div class="col-12 col-md-6 col-lg-2" id="monthGroup">
-                        <label for="month" class="form-label filter-label">
+                        <label for="month" class="form-label fw-semibold mb-2">
                             Tháng
                         </label>
 
                         <select class="form-select" id="month" name="month">
                             <c:forEach var="m" begin="1" end="12">
-                                <option value="${m}"
-                                    ${month == m ? 'selected' : ''}>
+                                <option value="${m}" <c:if test="${month == m}">selected</c:if>>
                                     Tháng ${m}
                                 </option>
                             </c:forEach>
                         </select>
                     </div>
 
-                    <!-- Quy -->
+                    <!-- Quý -->
                     <div class="col-12 col-md-6 col-lg-2" id="quarterGroup">
-                        <label for="quarter" class="form-label filter-label">
+                        <label for="quarter" class="form-label fw-semibold mb-2">
                             Quý
                         </label>
 
@@ -179,17 +97,16 @@
                                 name="quarter">
 
                             <c:forEach var="q" begin="1" end="4">
-                                <option value="${q}"
-                                    ${quarter == q ? 'selected' : ''}>
+                                <option value="${q}" <c:if test="${quarter == q}">selected</c:if>>
                                     Quý ${q}
                                 </option>
                             </c:forEach>
                         </select>
                     </div>
 
-                    <!-- Nam -->
+                    <!-- Năm -->
                     <div class="col-12 col-md-6 col-lg-2">
-                        <label for="year" class="form-label filter-label">
+                        <label for="year" class="form-label fw-semibold mb-2">
                             Năm
                         </label>
 
@@ -203,7 +120,7 @@
                                required>
                     </div>
 
-                    <!-- Nut loc -->
+                    <!-- Nút lọc -->
                     <div class="col-12 col-lg-3">
                         <button type="submit"
                                 class="btn btn-primary w-100">
@@ -217,15 +134,14 @@
         </div>
     </div>
 
-    <!-- Bang doanh thu -->
-    <div class="card report-card">
+    <!-- Bảng doanh thu -->
+    <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-3 p-lg-4">
 
-            <div class="d-flex flex-wrap justify-content-between
-                        align-items-center gap-3 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
                 <div class="d-flex align-items-center gap-3">
-                    <div class="report-icon">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3 p-3 fs-4">
                         <i class="bi bi-cash-stack"></i>
                     </div>
 
@@ -264,12 +180,12 @@
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead>
+                    <thead class="table-dark">
                         <tr>
-                            <th style="width: 70px;">STT</th>
-                            <th>Tuyến xe</th>
-                            <th class="text-end">Số vé thanh toán</th>
-                            <th class="text-end">Doanh thu</th>
+                            <th class="py-3" style="width: 70px;">STT</th>
+                            <th class="py-3">Tuyến xe</th>
+                            <th class="py-3 text-end">Số vé thanh toán</th>
+                            <th class="py-3 text-end">Doanh thu</th>
                         </tr>
                     </thead>
 
@@ -281,29 +197,27 @@
                                            varStatus="status">
 
                                     <tr>
-                                        <td>
+                                        <td class="py-3">
                                             ${status.index + 1}
                                         </td>
 
-                                        <td>
+                                        <td class="py-3">
                                             <div class="fw-semibold">
                                                 <c:out value="${item.fromLocation}"/>
-                                                <i class="bi bi-arrow-right mx-2
-                                                          text-primary"></i>
+                                                <i class="bi bi-arrow-right mx-2 text-primary"></i>
                                                 <c:out value="${item.toLocation}"/>
                                             </div>
                                         </td>
 
-                                        <td class="text-end">
-                                            <span class="badge bg-info-subtle
-                                                         text-info-emphasis">
+                                        <td class="py-3 text-end">
+                                            <span class="badge bg-info-subtle text-info-emphasis">
                                                 <fmt:formatNumber
                                                     value="${item.totalTickets}"
                                                     pattern="#,##0"/>
                                             </span>
                                         </td>
 
-                                        <td class="text-end revenue-value">
+                                        <td class="py-3 text-end text-success fw-bold text-nowrap">
                                             <fmt:formatNumber
                                                 value="${item.revenue}"
                                                 pattern="#,##0"/> đ
@@ -316,8 +230,7 @@
                             <c:otherwise>
                                 <tr>
                                     <td colspan="4" class="text-center py-5">
-                                        <i class="bi bi-inbox display-5
-                                                  text-secondary"></i>
+                                        <i class="bi bi-inbox display-5 text-secondary"></i>
 
                                         <p class="text-secondary mt-3 mb-0">
                                             Không có dữ liệu doanh thu trong kỳ này.
@@ -344,11 +257,17 @@
     function toggleFields() {
         var type = document.getElementById("type").value;
 
-        document.getElementById("monthGroup").style.display =
-            type === "month" ? "" : "none";
+        if (type === "month") {
+            document.getElementById("monthGroup").style.display = "";
+        } else {
+            document.getElementById("monthGroup").style.display = "none";
+        }
 
-        document.getElementById("quarterGroup").style.display =
-            type === "quarter" ? "" : "none";
+        if (type === "quarter") {
+            document.getElementById("quarterGroup").style.display = "";
+        } else {
+            document.getElementById("quarterGroup").style.display = "none";
+        }
     }
 
     document.addEventListener("DOMContentLoaded", toggleFields);

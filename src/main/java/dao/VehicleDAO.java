@@ -93,16 +93,65 @@ public class VehicleDAO extends DBContext {
         }
     }
 
-    // 5. Xóa xe
-    public void deleteVehicle(int id) {
+    // 5. Xóa xe (trả về true nếu xóa thành công, false nếu vướng khóa ngoại chuyến xe)
+    public boolean deleteVehicle(int id) {
         String sql = "DELETE FROM Vehicles WHERE Id = ?";
         try {
             Connection conn = getConnection();
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, id);
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                return true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
+    }
+
+    // 6. Lấy danh sách xe đang hoạt động (theo bảng phân công TV3: getAvailable)
+    public List<Vehicle> getAvailable() {
+        List<Vehicle> list = new ArrayList<>();
+        String sql = "SELECT * FROM Vehicles WHERE Status = N'Hoạt động'";
+        try {
+            Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Vehicle v = new Vehicle(
+                        rs.getInt("Id"),
+                        rs.getString("LicensePlate"),
+                        rs.getInt("TotalSeats"),
+                        rs.getString("Type"),
+                        rs.getString("Status")
+                );
+                list.add(v);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // 7. Kiểm tra trùng biển số xe khi thêm hoặc sửa
+    public boolean existsByLicensePlate(String licensePlate, int excludeId) {
+        if (licensePlate == null) {
+            return false;
+        }
+        String sql = "SELECT Id FROM Vehicles WHERE LOWER(LTRIM(RTRIM(LicensePlate))) = LOWER(LTRIM(RTRIM(?))) AND Id != ?";
+        try {
+            Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, licensePlate.trim());
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

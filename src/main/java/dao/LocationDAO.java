@@ -21,9 +21,9 @@ public class LocationDAO extends DBContext {
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 list.add(new Location(
-                    rs.getInt("Id"), 
-                    rs.getString("Name"), 
-                    rs.getTimestamp("CreatedAt")
+                        rs.getInt("Id"),
+                        rs.getString("Name"),
+                        rs.getTimestamp("CreatedAt")
                 ));
             }
         } catch (Exception e) {
@@ -41,9 +41,9 @@ public class LocationDAO extends DBContext {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return new Location(
-                    rs.getInt("Id"), 
-                    rs.getString("Name"), 
-                    rs.getTimestamp("CreatedAt")
+                        rs.getInt("Id"),
+                        rs.getString("Name"),
+                        rs.getTimestamp("CreatedAt")
                 );
             }
         } catch (Exception e) {
@@ -52,12 +52,32 @@ public class LocationDAO extends DBContext {
         return null;
     }
 
+    // 2.5. Kiểm tra trùng tên tỉnh thành (dùng cho Validate thêm/sửa)
+    public boolean existsByName(String name, int excludeId) {
+        if (name == null) {
+            return false;
+        }
+        try {
+            String sql = "SELECT Id FROM Locations WHERE LOWER(LTRIM(RTRIM(Name))) = LOWER(LTRIM(RTRIM(?))) AND Id != ?";
+            PreparedStatement ps = getConnection().prepareStatement(sql);
+            ps.setNString(1, name.trim());
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     // 3. Thêm mới tỉnh thành
     public boolean insert(Location loc) {
         String sql = "INSERT INTO Locations (Name) VALUES (?)";
         try {
             PreparedStatement ps = getConnection().prepareStatement(sql);
-            ps.setString(1, loc.getName());
+            ps.setNString(1, loc.getName());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,7 +90,7 @@ public class LocationDAO extends DBContext {
         String sql = "UPDATE Locations SET Name = ? WHERE Id = ?";
         try {
             PreparedStatement ps = getConnection().prepareStatement(sql);
-            ps.setString(1, loc.getName());
+            ps.setNString(1, loc.getName());
             ps.setInt(2, loc.getId());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {

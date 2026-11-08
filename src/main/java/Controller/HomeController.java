@@ -30,20 +30,18 @@ public class HomeController extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-
-        if (session == null
-                || !(session.getAttribute("currentUser") instanceof User)) {
-
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+        User currentUser = null;
+        if (session != null && session.getAttribute("currentUser") instanceof User) {
+            currentUser = (User) session.getAttribute("currentUser");
         }
-
-        User currentUser = (User) session.getAttribute("currentUser");
 
         String path = request.getServletPath();
 
         if ("/admin/dashboard".equals(path)) {
-
+            if (currentUser == null) {
+                response.sendRedirect(request.getContextPath() + "/login");
+                return;
+            }
             if (!currentUser.isAdmin()) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
@@ -121,7 +119,7 @@ public class HomeController extends HttpServlet {
             return;
         }
 
-        if (currentUser.isAdmin()) {
+        if (currentUser != null && currentUser.isAdmin()) {
             response.sendRedirect(
                     request.getContextPath() + "/admin/dashboard"
             );

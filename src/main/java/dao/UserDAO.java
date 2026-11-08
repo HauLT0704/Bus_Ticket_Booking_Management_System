@@ -19,8 +19,6 @@ import model.User;
  * @author Lâm Trung Hậu (TV1)
  */
 public class UserDAO extends DBContext {
-    
-    
 
     public User checkLogin(String username, String password) {
         String sql = "SELECT Id, Username, Password, Role, FullName, Email, Phone, Status, CreatedAt \n"
@@ -31,8 +29,6 @@ public class UserDAO extends DBContext {
             PreparedStatement ps = getConnection().prepareStatement(sql);
             ps.setString(1, username);
             ps.setString(2, hashMd5(password));
-            
-            
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -88,11 +84,23 @@ public class UserDAO extends DBContext {
             PreparedStatement ps = getConnection().prepareStatement(sql);
             ps.setString(1, u.getUsername());
             ps.setString(2, hashMd5(u.getPassword()));
-            ps.setString(3, u.getRole() != null ? u.getRole() : "user");
+            ps.setString(3, "user");
             ps.setString(4, u.getFullName());
             ps.setString(5, u.getEmail());
             ps.setString(6, u.getPhone());
             ps.setString(7, "Hoạt động");
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean lockUser(int userId) {
+        String sql = "UPDATE Users SET Status = N'Bị khóa' WHERE Id = ? AND Role != 'admin'";
+        try {
+            PreparedStatement ps = getConnection().prepareStatement(sql);
+            ps.setInt(1, userId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();

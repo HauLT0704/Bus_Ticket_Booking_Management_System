@@ -11,9 +11,10 @@ import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import model.Location;
 import model.User;
+import util.PaginationUtil;
 
 /**
- * @author Lâm Trung Hậu (TV1)
+ * Phân công: Lâm Trung Hậu
  */
 @WebServlet(name = "LocationController", urlPatterns = {"/admin/location"})
 public class LocationController extends HttpServlet {
@@ -35,22 +36,48 @@ public class LocationController extends HttpServlet {
         
         LocationDAO locationDAO = new LocationDAO();
         String action = request.getParameter("action");
+        if (action == null) {
+            action = "list";
+        }
         
-        if (action == null || action.equals("list")) {
-            List<Location> list = locationDAO.getAll();
-            request.setAttribute("locationList", list);
+        if (action.equals("list")) {
+            List<Location> fullList = locationDAO.getAll();
+
+            int page = 1;
+            String pageParam = request.getParameter("page");
+            if (pageParam != null) {
+                try {
+                    page = Integer.parseInt(pageParam);
+                } catch (NumberFormatException ignored) {}
+            }
+            PaginationUtil<Location> pagination = PaginationUtil.paginate(fullList, page, 8);
+            request.setAttribute("pagination", pagination);
+            request.setAttribute("locationList", pagination.getPageItems());
+            request.setAttribute("baseUrl", request.getContextPath() + "/admin/location?action=list");
+
             request.getRequestDispatcher("/WEB-INF/admin/location-list.jsp").forward(request, response);
         } else if (action.equals("edit")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Location loc = locationDAO.getById(id);
-            request.setAttribute("location", loc);
-            request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                Location loc = locationDAO.getById(id);
+                request.setAttribute("location", loc);
+                request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/location");
+            }
         } else if (action.equals("add")) {
             request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
         } else if (action.equals("delete")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            locationDAO.delete(id);
-            response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
+            boolean deleted = false;
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                deleted = locationDAO.delete(id);
+            } catch (NumberFormatException ignored) {}
+            if (deleted) {
+                response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/location?msg=delete_error");
+            }
         }
     }
 
@@ -58,18 +85,69 @@ public class LocationController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        LocationDAO locationDAO = new LocationDAO();
         
+        // Kiểm tra đăng nhập và phân quyền Admin
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !currentUser.isAdmin()) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        LocationDAO locationDAO = new LocationDAO();
         String action = request.getParameter("action");
         String name = request.getParameter("name");
         
+        int id = 0;
+        String idParam = request.getParameter("id");
+        if (idParam != null && !idParam.trim().isEmpty()) {
+            try {
+                id = Integer.parseInt(idParam.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // Validate dữ liệu đầu vào khi Thêm / Sửa
+        if (name == null || name.trim().isEmpty()) {
+            Location loc = new Location(id, "");
+            if (id > 0) {
+                request.setAttribute("location", loc);
+            }
+            request.setAttribute("errorMsg", "Tên tỉnh / thành phố không được để trống!");
+            request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+            return;
+        }
+
+        String cleanName = name.trim();
+        if (cleanName.length() < 2 || cleanName.length() > 100) {
+            Location loc = new Location(id, cleanName);
+            if (id > 0) {
+                request.setAttribute("location", loc);
+            }
+            request.setAttribute("errorMsg", "Tên tỉnh / thành phố phải từ 2 đến 100 ký tự!");
+            request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+            return;
+        }
+
+        if (locationDAO.existsByName(cleanName, id)) {
+            Location loc = new Location(id, cleanName);
+            if (id > 0) {
+                request.setAttribute("location", loc);
+            }
+            request.setAttribute("errorMsg", "Tỉnh / thành phố '" + cleanName + "' đã tồn tại trong hệ thống!");
+            request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
+            return;
+        }
+        
         if ("insert".equals(action)) {
-            Location loc = new Location(name);
+            Location loc = new Location(cleanName);
             locationDAO.insert(loc);
             response.sendRedirect(request.getContextPath() + "/admin/location?msg=added");
         } else if ("update".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Location loc = new Location(id, name);
+            Location loc = new Location(id, cleanName);
             locationDAO.update(loc);
             response.sendRedirect(request.getContextPath() + "/admin/location?msg=updated");
         }

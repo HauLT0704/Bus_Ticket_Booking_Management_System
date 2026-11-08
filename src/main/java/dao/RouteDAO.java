@@ -26,8 +26,16 @@ public class RouteDAO extends DBContext {
         try {
             String sql = "INSERT INTO Routes (FromLocationId, ToLocationId, Distance, Duration) VALUES (?, ?, ?, ?)";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
-            ps.setInt(1, route.getFromLocation() != null ? route.getFromLocation().getId() : 0);
-            ps.setInt(2, route.getToLocation() != null ? route.getToLocation().getId() : 0);
+            int fromId = 0;
+            if (route.getFromLocation() != null) {
+                fromId = route.getFromLocation().getId();
+            }
+            int toId = 0;
+            if (route.getToLocation() != null) {
+                toId = route.getToLocation().getId();
+            }
+            ps.setInt(1, fromId);
+            ps.setInt(2, toId);
             ps.setDouble(3, route.getDistance());
             ps.setInt(4, route.getDuration());
             return ps.executeUpdate();
@@ -110,8 +118,16 @@ public class RouteDAO extends DBContext {
         try {
             String sql = "UPDATE Routes SET FromLocationId = ?, ToLocationId = ?, Distance = ?, Duration = ? WHERE Id = ?";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
-            ps.setInt(1, route.getFromLocation() != null ? route.getFromLocation().getId() : 0);
-            ps.setInt(2, route.getToLocation() != null ? route.getToLocation().getId() : 0);
+            int fromId = 0;
+            if (route.getFromLocation() != null) {
+                fromId = route.getFromLocation().getId();
+            }
+            int toId = 0;
+            if (route.getToLocation() != null) {
+                toId = route.getToLocation().getId();
+            }
+            ps.setInt(1, fromId);
+            ps.setInt(2, toId);
             ps.setDouble(3, route.getDistance());
             ps.setInt(4, route.getDuration());
             ps.setInt(5, route.getId());
@@ -122,16 +138,37 @@ public class RouteDAO extends DBContext {
     }
 
     //D
-    public void delete(int id) {
+    public boolean delete(int id) {
         try {
             String sql = "DELETE FROM Routes WHERE Id = ?";
             PreparedStatement ps = this.getConnection().prepareStatement(sql);
             ps.setInt(1, id);
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                return true;
+            }
         } catch (SQLException ex) {
             Logger.getLogger(RouteDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return false;
+    }
 
+    // Kiểm tra tuyến đường trùng điểm đi & điểm đến
+    public boolean existsByLocations(int fromLocationId, int toLocationId, int excludeId) {
+        try {
+            String sql = "SELECT Id FROM Routes WHERE FromLocationId = ? AND ToLocationId = ? AND Id != ?";
+            PreparedStatement ps = this.getConnection().prepareStatement(sql);
+            ps.setInt(1, fromLocationId);
+            ps.setInt(2, toLocationId);
+            ps.setInt(3, excludeId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(RouteDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
     }
     
     

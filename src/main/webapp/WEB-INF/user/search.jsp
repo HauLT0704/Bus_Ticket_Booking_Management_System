@@ -1,4 +1,4 @@
-<%@ page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ include file="/WEB-INF/common/header.jsp" %>
@@ -6,7 +6,9 @@
 <div class="container py-4">
 
     <!-- KHỐI TÌM KIẾM CHUYẾN XE (PHÂN CÔNG TV4) -->
-    <div class="card shadow-sm border-0 rounded-4 mb-4" style="background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);">
+    <div class="card shadow-sm border-0 rounded-4 mb-4"
+         style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.88) 0%, rgba(0, 67, 168, 0.92) 100%),
+                url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;">
         <div class="card-body p-4 text-white">
             <h3 class="fw-bold mb-1"><i class="bi bi-search me-2"></i>Tìm Vé Xe Khách</h3>
             <p class="text-white-50 mb-3 small">Tra cứu lịch trình và giá vé các tuyến đường</p>
@@ -207,18 +209,23 @@
                     </div>
                 </c:forEach>
             </div>
+
+            <!-- PHÂN TRANG CHO DANH SÁCH CHUYẾN XE CỦA USER (PHỐI HỢP TV5) -->
+            <div class="card border-0 shadow-sm rounded-3 px-4 pb-3 mt-3 bg-white">
+                <jsp:include page="../common/pagination.jsp" />
+            </div>
         </c:when>
 
         <c:otherwise>
             <c:choose>
                 <c:when test="${not empty transferTrips}">
-                    <!-- GỢI Ý GHÉP CHUYẾN (TV4 TÍCH HỢP) NẾU CÓ CHUYẾN TRUNG GIAN -->
+                    <!-- GỢI Ý GHÉP CHUYẾN (TV4 TÍCH HỢP) NẾU CÓ CHUYẾN TRUNG GIAN HOẶC TUYẾN DÀI ĐI QUA -->
                     <div class="alert alert-info border-0 rounded-4 shadow-sm p-4 mb-4" style="background-color: #e8f4fd;">
                         <div class="d-flex align-items-center gap-3">
                             <i class="bi bi-shuffle fs-1 text-primary"></i>
                             <div>
-                                <h5 class="fw-bold mb-1 text-primary">Không có chuyến đi thẳng - Gợi Ý Ghép Chuyến Phù Hợp</h5>
-                                <p class="mb-0 text-muted">Chúng tôi đã tìm thấy các phương án nối chuyến trung gian (2 chặng) cho hành trình của bạn.</p>
+                                <h5 class="fw-bold mb-1 text-primary">Không còn chuyến đi thẳng phù hợp - Gợi Ý Ghép Chuyến</h5>
+                                <p class="mb-0 text-muted">Hệ thống gợi ý các lộ trình nối 2 chặng hoặc ghép tuyến đường dài đi ngang qua điểm đón (Ví dụ: hết ghế Cần Thơ - TP.HCM có thể ghép chuyến Cà Mau - TP.HCM).</p>
                             </div>
                         </div>
                     </div>
@@ -228,41 +235,66 @@
                             <div class="card shadow-sm border-0 rounded-3 p-3 bg-white hover-shadow transition">
                                 <div class="row align-items-center">
                                     <div class="col-md-9">
-                                        <!-- Chặng 1 -->
-                                        <div class="d-flex align-items-center gap-3 mb-2 p-2 bg-light rounded-3">
-                                            <span class="badge bg-primary px-2 py-1">Chặng 1</span>
-                                            <div class="fw-bold text-dark">
-                                                <fmt:formatDate value="${tr.trip1Dep}" pattern="HH:mm" /> 
-                                                <span class="text-primary fw-bold">${tr.fromName}</span>
-                                                <i class="bi bi-arrow-right mx-1 text-secondary"></i>
-                                                <fmt:formatDate value="${tr.trip1Arr}" pattern="HH:mm" />
-                                                <span class="text-success fw-bold">${tr.midName} (Trung chuyển)</span>
-                                            </div>
-                                            <span class="badge bg-secondary-subtle text-dark small ms-auto">
-                                                ${tr.trip1Type} (${tr.trip1Plate})
-                                            </span>
-                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-outline-primary btn-sm fw-semibold">
-                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 1
-                                            </a>
-                                        </div>
+                                        <c:choose>
+                                            <c:when test="${tr.transferType == 'pass_through'}">
+                                                <!-- Tuyến dài đi ngang qua điểm đón -->
+                                                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border border-primary-subtle">
+                                                    <span class="badge bg-warning text-dark px-2 py-1">Ghép tuyến dài</span>
+                                                    <div class="fw-bold text-dark">
+                                                        <fmt:formatDate value="${tr.trip1Dep}" pattern="HH:mm" />
+                                                        <span class="text-secondary">${tr.fromName}</span>
+                                                        <i class="bi bi-arrow-right mx-1 text-secondary"></i>
+                                                        <span class="text-primary fw-bold">Đón tại: ${tr.midName}</span>
+                                                        <i class="bi bi-arrow-right mx-1 text-secondary"></i>
+                                                        <fmt:formatDate value="${tr.trip1Arr}" pattern="HH:mm" />
+                                                        <span class="text-success fw-bold">${tr.toName}</span>
+                                                    </div>
+                                                    <span class="badge bg-secondary-subtle text-dark small ms-auto">
+                                                        ${tr.trip1Type} (${tr.trip1Plate}) - Còn ${tr.trip1Seats} chỗ
+                                                    </span>
+                                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-primary btn-sm fw-semibold">
+                                                        <i class="bi bi-ticket-perforated me-1"></i>Chọn Ghép Tuyến
+                                                    </a>
+                                                </div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <!-- Chặng 1 -->
+                                                <div class="d-flex align-items-center gap-3 mb-2 p-2 bg-light rounded-3">
+                                                    <span class="badge bg-primary px-2 py-1">Chặng 1</span>
+                                                    <div class="fw-bold text-dark">
+                                                        <fmt:formatDate value="${tr.trip1Dep}" pattern="HH:mm" /> 
+                                                        <span class="text-primary fw-bold">${tr.fromName}</span>
+                                                        <i class="bi bi-arrow-right mx-1 text-secondary"></i>
+                                                        <fmt:formatDate value="${tr.trip1Arr}" pattern="HH:mm" />
+                                                        <span class="text-success fw-bold">${tr.midName} (Trung chuyển)</span>
+                                                    </div>
+                                                    <span class="badge bg-secondary-subtle text-dark small ms-auto">
+                                                        ${tr.trip1Type} (${tr.trip1Plate})
+                                                    </span>
+                                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-outline-primary btn-sm fw-semibold">
+                                                        <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 1
+                                                    </a>
+                                                </div>
 
-                                        <!-- Chặng 2 -->
-                                        <div class="d-flex align-items-center gap-3 p-2 bg-light rounded-3">
-                                            <span class="badge bg-success px-2 py-1">Chặng 2</span>
-                                            <div class="fw-bold text-dark">
-                                                <fmt:formatDate value="${tr.trip2Dep}" pattern="HH:mm" /> 
-                                                <span class="text-success fw-bold">${tr.midName}</span>
-                                                <i class="bi bi-arrow-right mx-1 text-secondary"></i>
-                                                <fmt:formatDate value="${tr.trip2Arr}" pattern="HH:mm" />
-                                                <span class="text-danger fw-bold">${tr.toName} (Đích đến)</span>
-                                            </div>
-                                            <span class="badge bg-secondary-subtle text-dark small ms-auto">
-                                                ${tr.trip2Type} (${tr.trip2Plate})
-                                            </span>
-                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip2Id}" class="btn btn-outline-success btn-sm fw-semibold">
-                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 2
-                                            </a>
-                                        </div>
+                                                <!-- Chặng 2 -->
+                                                <div class="d-flex align-items-center gap-3 p-2 bg-light rounded-3">
+                                                    <span class="badge bg-success px-2 py-1">Chặng 2</span>
+                                                    <div class="fw-bold text-dark">
+                                                        <fmt:formatDate value="${tr.trip2Dep}" pattern="HH:mm" /> 
+                                                        <span class="text-success fw-bold">${tr.midName}</span>
+                                                        <i class="bi bi-arrow-right mx-1 text-secondary"></i>
+                                                        <fmt:formatDate value="${tr.trip2Arr}" pattern="HH:mm" />
+                                                        <span class="text-danger fw-bold">${tr.toName} (Đích đến)</span>
+                                                    </div>
+                                                    <span class="badge bg-secondary-subtle text-dark small ms-auto">
+                                                        ${tr.trip2Type} (${tr.trip2Plate})
+                                                    </span>
+                                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip2Id}" class="btn btn-outline-success btn-sm fw-semibold">
+                                                        <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 2
+                                                    </a>
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
 
                                     <div class="col-md-3 text-center border-start">
@@ -270,7 +302,14 @@
                                         <div class="text-danger fw-bold fs-4">
                                             <fmt:formatNumber value="${tr.totalPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0" />
                                         </div>
-                                        <span class="badge bg-warning-subtle text-dark mt-1">Hành trình 2 chặng</span>
+                                        <c:choose>
+                                            <c:when test="${tr.transferType == 'pass_through'}">
+                                                <span class="badge bg-info-subtle text-dark mt-1">Ghép tuyến đường dài</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge bg-warning-subtle text-dark mt-1">Hành trình 2 chặng</span>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                 </div>
                             </div>
@@ -296,15 +335,5 @@
     </c:choose>
 
 </div>
-
-<style>
-    .hover-shadow:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
-    }
-    .transition {
-        transition: all 0.2s ease-in-out;
-    }
-</style>
 
 <%@ include file="/WEB-INF/common/footer.jsp" %>

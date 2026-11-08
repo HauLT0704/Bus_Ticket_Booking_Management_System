@@ -38,9 +38,11 @@ public class TransferDAO extends DBContext {
                 + "    t1.Price AS FirstPrice,\n"
                 + "    t2.Price AS SecondPrice,\n"
                 + "    (t1.Price + t2.Price) AS TotalPrice,\n"
-                + "    r1.ToLocationId AS TransferLocationId\n"
+                + "    r1.ToLocationId AS TransferLocationId,\n"
+                + "    midLoc.Name AS TransferLocationName\n"
                 + "FROM Trips t1\n"
                 + "INNER JOIN Routes r1 ON t1.RouteId = r1.Id\n"
+                + "INNER JOIN Locations midLoc ON r1.ToLocationId = midLoc.Id\n"
                 + "INNER JOIN Routes r2 ON r1.ToLocationId = r2.FromLocationId\n"
                 + "INNER JOIN Trips t2 ON t2.RouteId = r2.Id\n"
                 + "WHERE r1.FromLocationId = ?\n"
@@ -48,7 +50,7 @@ public class TransferDAO extends DBContext {
                 + "  AND t1.AvailableSeats >= ?\n"
                 + "  AND t2.AvailableSeats >= ?\n"
                 + "  AND DATEADD(MINUTE, 15, t1.ArrivalTime) <= t2.DepartureTime\n"
-                + "  AND DATEADD(MINUTE, 75, t1.ArrivalTime) >= t2.DepartureTime\n"
+                + "  AND DATEADD(MINUTE, 480, t1.ArrivalTime) >= t2.DepartureTime\n"
                 + "  AND t1.Status = N'Sắp khởi hành'\n"
                 + "  AND t2.Status = N'Sắp khởi hành'\n"
                 + "  AND CAST(t1.DepartureTime AS DATE) = ?\n"
@@ -87,7 +89,8 @@ public class TransferDAO extends DBContext {
                     TransferOption option = new TransferOption(
                             first,
                             second,
-                            rs.getInt("TransferLocationId")
+                            rs.getInt("TransferLocationId"),
+                            rs.getNString("TransferLocationName")
                     );
 
                     options.add(option);

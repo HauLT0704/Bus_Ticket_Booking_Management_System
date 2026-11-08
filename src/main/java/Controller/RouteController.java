@@ -1,12 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package Controller;
 
 import dao.RouteDAO;
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,18 +12,18 @@ import java.util.List;
 import model.Location;
 import model.Route;
 import model.User;
+import util.PaginationUtil;
 
 /**
- *
- * @author Nguyễn Tấn Phát (TV2)
+ * Controller Quản lý Tuyến đường (kèm phân trang)
+ * Phân công: Nguyễn Tấn Phát (TV2) - Phối hợp phân trang TV5
  */
-@WebServlet(name = "RouteController", urlPatterns = {"/admin/route"})
+@WebServlet(name = "RouteController", urlPatterns = {"/admin/route", "/admin/routes"})
 public class RouteController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Kiểm tra trạng thái đăng nhập và quyền admin chung của nhóm
         HttpSession session = request.getSession(false);
         if (session == null) {
             response.sendRedirect(request.getContextPath() + "/login");
@@ -44,19 +39,35 @@ public class RouteController extends HttpServlet {
         RouteDAO routeDAO = new RouteDAO();
         String action = request.getParameter("action");
 
-        // Phân nhánh điều hướng giao diện ngay trong doGet giống phong cách bạn Hậu
         if (action == null || action.equals("list")) {
-            List<Route> list = routeDAO.getList();
-            request.setAttribute("list", list);
+            List<Route> fullList = routeDAO.getList();
+
+            // Tích hợp phân trang (TV5)
+            int page = 1;
+            String pageParam = request.getParameter("page");
+            if (pageParam != null) {
+                try {
+                    page = Integer.parseInt(pageParam);
+                } catch (NumberFormatException ignored) {}
+            }
+            PaginationUtil<Route> pagination = PaginationUtil.paginate(fullList, page, 8);
+            request.setAttribute("pagination", pagination);
+            request.setAttribute("list", pagination.getPageItems());
+            request.setAttribute("baseUrl", request.getContextPath() + "/admin/route?action=list");
+
             request.getRequestDispatcher("/WEB-INF/admin/route-list.jsp").forward(request, response);
 
         } else if (action.equals("edit")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Route route = routeDAO.getById(id);
-            List<Location> locationList = routeDAO.getAllLocations();
-            request.setAttribute("route", route);
-            request.setAttribute("locationList", locationList);
-            request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                Route route = routeDAO.getById(id);
+                List<Location> locationList = routeDAO.getAllLocations();
+                request.setAttribute("route", route);
+                request.setAttribute("locationList", locationList);
+                request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/route");
+            }
             
         } else if (action.equals("add")) {
             List<Location> locationList = routeDAO.getAllLocations();
@@ -64,9 +75,16 @@ public class RouteController extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
             
         } else if (action.equals("delete")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            routeDAO.delete(id);
-            response.sendRedirect(request.getContextPath() + "/admin/route?msg=deleted");
+            boolean deleted = false;
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                deleted = routeDAO.delete(id);
+            } catch (NumberFormatException ignored) {}
+            if (deleted) {
+                response.sendRedirect(request.getContextPath() + "/admin/route?msg=deleted");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/route?msg=delete_error");
+            }
         }
     }
 
@@ -74,32 +92,52 @@ public class RouteController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null || !currentUser.isAdmin()) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         RouteDAO routeDAO = new RouteDAO();
 
         String action = request.getParameter("action");
 
-        // Lấy dữ liệu từ route-form.jsp gửi lên
-        int fromLocationId = Integer.parseInt(request.getParameter("fromLocationId"));
-        int toLocationId = Integer.parseInt(request.getParameter("toLocationId"));
-        double distance = Double.parseDouble(request.getParameter("distance"));
-        int duration = Integer.parseInt(request.getParameter("duration"));
+        int fromLocationId = 0;
+        int toLocationId = 0;
+        double distance = 0;
+        int duration = 0;
+        int currentId = 0;
+
+        try {
+            fromLocationId = Integer.parseInt(request.getParameter("fromLocationId"));
+            toLocationId = Integer.parseInt(request.getParameter("toLocationId"));
+            distance = Double.parseDouble(request.getParameter("distance"));
+            duration = Integer.parseInt(request.getParameter("duration"));
+            if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
+                currentId = Integer.parseInt(request.getParameter("id"));
+            }
+        } catch (NumberFormatException e) {
+            distance = -1;
+        }
         
-        // Kiểm tra điều kiện: Quãng đường & Thời gian từ 1 đến 1000, Điểm đi khác Điểm đến
-        if (distance <= 0 || distance > 1000 || duration <= 0 || duration > 1000 || fromLocationId == toLocationId) {
+        if (distance <= 0 || distance > 1000 || duration <= 0 || duration > 1000 || fromLocationId <= 0 || toLocationId <= 0 || fromLocationId == toLocationId) {
             List<Location> locationList = routeDAO.getAllLocations();
             request.setAttribute("locationList", locationList);
 
             Route route = new Route();
+            route.setId(currentId);
             route.setDistance(distance);
             route.setDuration(duration);
             Location fromLoc = new Location(); fromLoc.setId(fromLocationId);
             Location toLoc = new Location(); toLoc.setId(toLocationId);
             route.setFromLocation(fromLoc);
             route.setToLocation(toLoc);
-            
-            if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
-                route.setId(Integer.parseInt(request.getParameter("id")));
-            }
 
             request.setAttribute("route", route);
             request.setAttribute("errorMsg", "Vui lòng chọn điểm đi khác điểm đến, quãng đường & thời gian dự kiến nằm trong khoảng từ 1 đến 1000!");
@@ -107,10 +145,27 @@ public class RouteController extends HttpServlet {
             return;
         }
 
+        if (routeDAO.existsByLocations(fromLocationId, toLocationId, currentId)) {
+            List<Location> locationList = routeDAO.getAllLocations();
+            request.setAttribute("locationList", locationList);
+
+            Route route = new Route();
+            route.setId(currentId);
+            route.setDistance(distance);
+            route.setDuration(duration);
+            Location fromLoc = new Location(); fromLoc.setId(fromLocationId);
+            Location toLoc = new Location(); toLoc.setId(toLocationId);
+            route.setFromLocation(fromLoc);
+            route.setToLocation(toLoc);
+
+            request.setAttribute("route", route);
+            request.setAttribute("errorMsg", "Tuyến đường giữa 2 địa điểm này đã tồn tại trong hệ thống!");
+            request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
+            return;
+        }
+
         if ("insert".equals(action)) {
             Route route = new Route();
-
-            // Đóng gói ID vào đối tượng Location lồng bên trong Route
             Location fromLoc = new Location();
             fromLoc.setId(fromLocationId);
             Location toLoc = new Location();
@@ -129,7 +184,6 @@ public class RouteController extends HttpServlet {
             Route route = new Route();
             route.setId(id);
 
-            // Đóng gói ID vào đối tượng Location lồng bên trong Route
             Location fromLoc = new Location();
             fromLoc.setId(fromLocationId);
             Location toLoc = new Location();

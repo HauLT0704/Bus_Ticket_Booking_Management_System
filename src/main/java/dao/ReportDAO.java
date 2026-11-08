@@ -1,12 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
 /**
- *
- * @author Hứa Hạo Danh (TV5)
+ * Phân công: Hứa Hạo Danh (TV5)
  */
 import db.DBContext;
 import java.sql.Connection;
@@ -16,7 +11,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -145,9 +139,8 @@ public class ReportDAO extends DBContext {
 
         return revenueList;
     }
-    
-    
-    // Lay thong tin chi tiet ve theo ma ve
+
+    // Lay thong tin chi tiet ve theo ma ve (in vé)
     public Map<String, Object> getTicketDetails(int ticketId) {
 
         Map<String, Object> ticket = null;
@@ -223,4 +216,75 @@ public class ReportDAO extends DBContext {
         return ticket;
     }
 
+    // Lay thong tin tong quan chuyen xe theo tripId (TV5)
+    public Map<String, Object> getTripSummary(int tripId) {
+        Map<String, Object> summary = null;
+        String sql = "SELECT tr.Id AS TripId, tr.DepartureTime, tr.ArrivalTime, tr.Price, tr.Status, "
+                + "l1.Name AS FromLocation, l2.Name AS ToLocation, "
+                + "v.LicensePlate, v.Type AS VehicleType, v.TotalSeats, "
+                + "tr.AvailableSeats "
+                + "FROM Trips tr "
+                + "JOIN Routes r ON tr.RouteId = r.Id "
+                + "JOIN Locations l1 ON r.FromLocationId = l1.Id "
+                + "JOIN Locations l2 ON r.ToLocationId = l2.Id "
+                + "JOIN Vehicles v ON tr.VehicleId = v.Id "
+                + "WHERE tr.Id = ?";
+        try (Connection conn = this.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, tripId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    summary = new HashMap<>();
+                    summary.put("tripId", rs.getInt("TripId"));
+                    summary.put("departureTime", rs.getTimestamp("DepartureTime"));
+                    summary.put("arrivalTime", rs.getTimestamp("ArrivalTime"));
+                    summary.put("price", rs.getBigDecimal("Price"));
+                    summary.put("status", rs.getString("Status"));
+                    summary.put("fromLocation", rs.getString("FromLocation"));
+                    summary.put("toLocation", rs.getString("ToLocation"));
+                    summary.put("licensePlate", rs.getString("LicensePlate"));
+                    summary.put("vehicleType", rs.getString("VehicleType"));
+                    summary.put("totalSeats", rs.getInt("TotalSeats"));
+                    summary.put("availableSeats", rs.getInt("AvailableSeats"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Loi khi lay thong tin chuyen xe:");
+            e.printStackTrace();
+        }
+        return summary;
+    }
+
+    // Lay danh sach khach hang va ve da dat theo tripId (TV5)
+    public List<Map<String, Object>> getCustomersByTrip(int tripId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT t.Id AS TicketId, t.SeatNumber, t.BookingTime, t.Status AS TicketStatus, t.TotalPrice, "
+                + "c.Id AS CustomerId, c.FullName, c.Phone, c.Email, c.IdCard "
+                + "FROM Tickets t "
+                + "JOIN Customers c ON t.CustomerId = c.Id "
+                + "WHERE t.TripId = ? "
+                + "ORDER BY t.SeatNumber ASC";
+        try (Connection conn = this.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, tripId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("ticketId", rs.getInt("TicketId"));
+                    map.put("seatNumber", rs.getString("SeatNumber"));
+                    map.put("bookingTime", rs.getTimestamp("BookingTime"));
+                    map.put("ticketStatus", rs.getString("TicketStatus"));
+                    map.put("totalPrice", rs.getBigDecimal("TotalPrice"));
+                    map.put("customerId", rs.getInt("CustomerId"));
+                    map.put("fullName", rs.getString("FullName"));
+                    map.put("phone", rs.getString("Phone"));
+                    map.put("email", rs.getString("Email"));
+                    map.put("idCard", rs.getString("IdCard"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Loi khi lay danh sach khach hang theo chuyen:");
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

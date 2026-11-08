@@ -1,36 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Tuyến đường - Bus Booking System</title>
-    <!-- Bootstrap 5.3 & Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <title>Quản Lý Tuyến Đường - Vé Xe Miền Tây</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
-    <!-- NAVBAR ADMIN -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="${pageContext.request.contextPath}/admin/route">
-                <i class="bi bi-bus-front-fill fs-4 me-2"></i> Bus Ticket Booking
-            </a>
-            <div class="d-flex align-items-center">
-                <span class="text-white me-3 small">
-                    <i class="bi bi-person-circle me-1"></i> Xin chào, <b>${currentUser.fullName != null ? currentUser.fullName : currentUser.username}</b>
-                </span>
-                <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-light btn-sm fw-semibold">
-                    <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
-                </a>
-            </div>
-        </div>
-    </nav>
+    <jsp:include page="../common/header.jsp" />
 
-    <!-- CONTAINER CHÍNH -->
-    <div class="container pb-5">
+    <div class="container py-4">
 
         <!-- THÔNG BÁO FEEDBACK -->
         <c:if test="${param.msg == 'added'}">
@@ -51,61 +35,64 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
-
-        <!-- TIÊU ĐỀ & NÚT THÊM MỚI -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h4 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-signpost-split-fill text-primary me-2"></i>Quản Lý Tuyến Đường
-                </h4>
-                <small class="text-secondary">Quản lý các cung đường di chuyển giữa các bến xe</small>
+        <c:if test="${param.msg == 'delete_error'}">
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Không thể xóa!</strong> Tuyến đường này đang có chuyến xe hoạt động. Vui lòng xóa các chuyến xe thuộc tuyến trước.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <a href="${pageContext.request.contextPath}/admin/route?action=add" class="btn btn-primary fw-bold shadow-sm">
-                <i class="bi bi-plus-circle me-1"></i> Thêm Tuyến Đường Mới
+        </c:if>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="bi bi-signpost-split-fill text-primary me-2"></i>Quản Lý Tuyến Đường
+                </h3>
+                <p class="text-muted mb-0 small">Quản lý các cung đường nối các tỉnh thành, khoảng cách km và thời gian dự kiến</p>
+            </div>
+            <a href="${pageContext.request.contextPath}/admin/route?action=add" class="btn btn-primary fw-semibold px-3 py-2 shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> + Thêm Tuyến Đường Mới
             </a>
         </div>
 
         <!-- BẢNG DANH SÁCH -->
-        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light text-secondary border-bottom">
+                    <thead class="table-light">
                         <tr>
-                            <th class="text-center py-3" style="width: 70px;">MÃ</th>
+                            <th class="text-center py-3 ps-3" style="width: 70px;">MÃ</th>
                             <th class="py-3">ĐIỂM ĐI</th>
                             <th class="py-3">ĐIỂM ĐẾN</th>
-                            <th class="py-3">QUÃNG ĐƯỜNG</th>
-                            <th class="py-3">THỜI GIAN DỰ KIẾN</th>
+                            <th class="py-3 text-center">KHOẢNG CÁCH (KM)</th>
+                            <th class="py-3 text-center">THỜI GIAN DỰ KIẾN</th>
                             <th class="text-center py-3" style="width: 140px;">HÀNH ĐỘNG</th>
                         </tr>
                     </thead>
                     <tbody>
                         <c:forEach var="r" items="${list}">
                             <tr>
-                                <td class="text-center fw-bold text-muted">#${r.id}</td>
-                                <td class="fw-semibold text-dark">
-                                    <i class="bi bi-geo-alt text-danger me-1"></i> ${r.fromLocation != null ? r.fromLocation.name : 'N/A'}
+                                <td class="text-center fw-bold text-muted ps-3">#${r.id}</td>
+                                <td class="fw-semibold text-danger">
+                                    <i class="bi bi-geo-alt-fill me-1"></i>${r.fromLocation.name}
                                 </td>
-                                <td class="fw-semibold text-dark">
-                                    <i class="bi bi-geo-alt-fill text-success me-1"></i> ${r.toLocation != null ? r.toLocation.name : 'N/A'}
+                                <td class="fw-semibold text-success">
+                                    <i class="bi bi-flag-fill me-1"></i>${r.toLocation.name}
                                 </td>
-                                <td>
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2">
-                                        <i class="bi bi-speedometer2 me-1"></i> ${r.distance} km
+                                <td class="text-center fw-semibold">${r.distance} km</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="bi bi-clock me-1"></i>${r.duration} phút
                                     </span>
                                 </td>
-                                <td class="text-secondary">
-                                    <i class="bi bi-clock me-1"></i> ${r.duration} phút
-                                </td>
-                                <td class="text-center">
+                                <td class="text-center text-nowrap">
                                     <a href="${pageContext.request.contextPath}/admin/route?action=edit&id=${r.id}" 
-                                       class="btn btn-sm btn-outline-warning border-0 me-1" title="Sửa">
-                                        <i class="bi bi-pencil-square fs-6"></i>
+                                       class="btn btn-sm btn-outline-warning me-1" title="Sửa tuyến">
+                                        <i class="bi bi-pencil-square"></i> Sửa
                                     </a>
                                     <a href="${pageContext.request.contextPath}/admin/route?action=delete&id=${r.id}" 
-                                       class="btn btn-sm btn-outline-danger border-0" 
-                                       onclick="return confirm('Bạn có chắc muốn xóa tuyến đường #${r.id} này không?');" title="Xóa">
-                                        <i class="bi bi-trash3-fill fs-6"></i>
+                                       class="btn btn-sm btn-outline-danger" 
+                                       onclick="return confirm('Bạn có chắc muốn xóa tuyến đường này không?');" title="Xóa tuyến">
+                                        <i class="bi bi-trash3-fill"></i> Xóa
                                     </a>
                                 </td>
                             </tr>
@@ -122,11 +109,13 @@
                     </tbody>
                 </table>
             </div>
-        </div>
 
+            <jsp:include page="../common/pagination.jsp" />
+
+        </div>
     </div>
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <jsp:include page="../common/footer.jsp" />
+
 </body>
 </html>

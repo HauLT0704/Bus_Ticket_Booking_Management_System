@@ -1,286 +1,187 @@
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="jakarta.tags.core"%>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vé Xe Miền Tây - Hệ Thống Đặt Vé Trực Tuyến</title>
 
-    <title>Bus Ticket Booking</title>
-
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
-    <style>
-        .navbar .nav-link {
-            border-radius: 8px;
-            padding: 8px 12px !important;
-            transition: background-color 0.25s ease;
-        }
-
-        .navbar .nav-link:hover,
-        .navbar .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .navbar .nav-link:focus-visible {
-            outline: 2px solid white;
-            outline-offset: 2px;
-        }
-
-        .navbar .dropdown-item {
-            padding: 10px 15px;
-        }
-
-        .navbar .dropdown-item:hover,
-        .navbar .dropdown-item.active {
-            background-color: #e7f1ff;
-            color: #0d6efd;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .navbar .nav-link {
-                transition: none;
-            }
-        }
-    </style>
 </head>
 
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary py-2 shadow-sm">
+<c:set var="navThemeClass" value="bg-primary" />
+<c:if test="${not empty sessionScope.currentUser and sessionScope.currentUser.admin}">
+    <c:set var="navThemeClass" value="bg-dark" />
+</c:if>
 
-    <div class="container-fluid px-4">
+<nav class="navbar navbar-expand-lg navbar-dark ${navThemeClass} shadow-sm py-2 sticky-top d-print-none">
+    <div class="container-fluid px-lg-4">
 
-        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2"
+        <!-- LOGO THƯƠNG HIỆU -->
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-white text-decoration-none"
            href="${pageContext.request.contextPath}/home">
-
-            <i class="bi bi-bus-front-fill fs-3"></i>
-            BUS BOOKING
-
+            <span class="d-inline-flex align-items-center justify-content-center bg-white text-primary rounded-3 p-1" style="width: 32px; height: 32px;">
+                <i class="bi bi-bus-front-fill fs-5"></i>
+            </span>
+            <span>VÉ XE MIỀN TÂY</span>
         </a>
 
-        <button class="navbar-toggler"
+        <!-- NÚT MOBILE TOGGLER -->
+        <button class="navbar-toggler border-0"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#navbarMenu"
                 aria-controls="navbarMenu"
                 aria-expanded="false"
-                aria-label="Toggle navigation">
-
+                aria-label="Chuyển đổi menu">
             <span class="navbar-toggler-icon"></span>
-
         </button>
 
         <div class="collapse navbar-collapse" id="navbarMenu">
 
+            <!-- DANH MỤC ĐIỀU HƯỚNG -->
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-lg-1">
 
                 <c:choose>
-
+                    <%-- DÀNH CHO ADMIN QUẢN TRỊ VIÊN --%>
                     <c:when test="${not empty sessionScope.currentUser and sessionScope.currentUser.admin}">
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.endsWith("/dashboard")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/dashboard">
+                                <i class="bi bi-speedometer2 me-1"></i>
+                                Bảng điều khiển
+                            </a>
+                        </li>
 
                         <li class="nav-item">
-
-                            <a class="nav-link text-white
-                               ${pageContext.request.requestURI.endsWith('/dashboard') ? 'active' : ''}"
-                               href="${pageContext.request.contextPath}/admin/dashboard">
-
-                                <i class="bi bi-speedometer2 me-1"></i>
-                                Dashboard
-
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/trip")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/trip">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                Chuyến xe
                             </a>
-
                         </li>
 
-                        <li class="nav-item dropdown">
-
-                            <a class="nav-link dropdown-toggle text-white"
-                               href="#"
-                               role="button"
-                               data-bs-toggle="dropdown"
-                               aria-expanded="false">
-
-                                <i class="bi bi-grid me-1"></i>
-                                Management
-
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/route")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/route">
+                                <i class="bi bi-signpost-split me-1"></i>
+                                Tuyến đường
                             </a>
-
-                            <ul class="dropdown-menu shadow">
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="${pageContext.request.contextPath}/admin/trip">
-
-                                        <i class="bi bi-bus-front me-2"></i>
-                                        Trip Management
-
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="${pageContext.request.contextPath}/customer">
-
-                                        <i class="bi bi-people me-2"></i>
-                                        Customer Management
-
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="${pageContext.request.contextPath}/vehicle">
-
-                                        <i class="bi bi-truck-front me-2"></i>
-                                        Vehicle Management
-
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="${pageContext.request.contextPath}/admin/location">
-
-                                        <i class="bi bi-geo-alt me-2"></i>
-                                        Location Management
-
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="${pageContext.request.contextPath}/admin/route">
-
-                                        <i class="bi bi-signpost-split me-2"></i>
-                                        Route Management
-
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="${pageContext.request.contextPath}/admin/report">
-
-                                        <i class="bi bi-bar-chart-line me-2"></i>
-                                        Revenue Report
-
-                                    </a>
-                                </li>
-
-                            </ul>
-
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/vehicle")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/vehicle">
+                                <i class="bi bi-truck-front me-1"></i>
+                                Xe khách
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/location")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/location">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                Địa điểm
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/customer")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/customer">
+                                <i class="bi bi-people me-1"></i>
+                                Khách hàng
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/report")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/report">
+                                <i class="bi bi-bar-chart-line me-1"></i>
+                                Báo cáo
+                            </a>
+                        </li>
                     </c:when>
 
+                    <%-- DÀNH CHO HÀNH KHÁCH & USER --%>
                     <c:otherwise>
-
                         <li class="nav-item">
-
-                            <a class="nav-link text-white
-                               ${pageContext.request.requestURI.endsWith('/home') and param.mode != 'transfer' ? 'active' : ''}"
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.endsWith("/home") and param.mode != "transfer"}'>active fw-semibold bg-white bg-opacity-10</c:if>"
                                href="${pageContext.request.contextPath}/home">
-
                                 <i class="bi bi-house-door me-1"></i>
-                                Home
-
+                                Trang chủ
                             </a>
-
                         </li>
 
                         <li class="nav-item">
-
-                            <a class="nav-link text-white
-                               ${pageContext.request.requestURI.endsWith('/search') ? 'active' : ''}"
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.endsWith("/search")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
                                href="${pageContext.request.contextPath}/search">
-
                                 <i class="bi bi-search me-1"></i>
-                                Search Tickets
-
+                                Tìm chuyến xe
                             </a>
-
                         </li>
 
                         <li class="nav-item">
-
-                            <a class="nav-link text-white
-                               ${(pageContext.request.requestURI.endsWith('/home') and param.mode == 'transfer') or pageContext.request.requestURI.endsWith('/transfer') ? 'active' : ''}"
+                            <a class="nav-link px-3 rounded-3 <c:if test='${(pageContext.request.requestURI.endsWith("/home") and param.mode == "transfer") or pageContext.request.requestURI.endsWith("/transfer")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
                                href="${pageContext.request.contextPath}/home?mode=transfer">
-
                                 <i class="bi bi-arrow-left-right me-1"></i>
-                                Transfer Trips
-
+                                Gợi ý ghép chuyến
                             </a>
-
                         </li>
-
                     </c:otherwise>
-
                 </c:choose>
 
             </ul>
 
-            <div class="d-flex align-items-center gap-2">
-
+            <!-- KHỐI ĐĂNG NHẬP / NGƯỜI DÙNG -->
+            <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                 <c:choose>
-
                     <c:when test="${not empty sessionScope.currentUser}">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-white bg-opacity-10 text-white border border-light border-opacity-25 rounded-pill px-3 py-2 fw-normal d-flex align-items-center gap-2">
+                                <i class="bi bi-person-circle"></i>
+                                <span>
+                                    <c:choose>
+                                        <c:when test="${not empty sessionScope.currentUser.fullName}">
+                                            <c:out value="${sessionScope.currentUser.fullName}"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:out value="${sessionScope.currentUser.username}"/>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </span>
+                                <c:if test="${sessionScope.currentUser.admin}">
+                                    <span class="badge bg-warning text-dark ms-1">Quản trị viên</span>
+                                </c:if>
+                            </span>
 
-                        <span class="badge bg-white text-primary px-3 py-2 rounded-pill">
-
-                            <i class="bi bi-person-circle me-1"></i>
-                            Hello
-
-                            <c:choose>
-
-                                <c:when test="${not empty sessionScope.currentUser.fullName}">
-                                    <c:out value="${sessionScope.currentUser.fullName}"/>
-                                </c:when>
-
-                                <c:otherwise>
-                                    <c:out value="${sessionScope.currentUser.username}"/>
-                                </c:otherwise>
-
-                            </c:choose>
-
-                        </span>
-
-                        <a href="${pageContext.request.contextPath}/logout"
-                           class="btn btn-outline-light btn-sm fw-bold">
-
-                            <i class="bi bi-box-arrow-right me-1"></i>
-                            Logout
-
-                        </a>
-
+                            <a href="${pageContext.request.contextPath}/logout"
+                               class="btn btn-outline-light btn-sm px-3" title="Đăng xuất khỏi hệ thống">
+                                <i class="bi bi-box-arrow-right me-1"></i>
+                                Đăng xuất
+                            </a>
+                        </div>
                     </c:when>
 
                     <c:otherwise>
-
                         <a href="${pageContext.request.contextPath}/login"
-                           class="btn btn-light btn-sm text-primary fw-bold">
-
+                           class="btn btn-light btn-sm text-primary fw-semibold px-3">
                             <i class="bi bi-box-arrow-in-right me-1"></i>
-                            Login
-
+                            Đăng nhập
                         </a>
-
+                        <a href="${pageContext.request.contextPath}/register"
+                           class="btn btn-outline-light btn-sm px-3">
+                            Đăng ký
+                        </a>
                     </c:otherwise>
-
                 </c:choose>
-
             </div>
 
         </div>
-
     </div>
-
 </nav>

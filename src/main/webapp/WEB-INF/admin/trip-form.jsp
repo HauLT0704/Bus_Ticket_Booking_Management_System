@@ -6,175 +6,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${trip != null && trip.id != 0 ? 'Cập nhật Chuyến xe' : 'Thêm Chuyến xe mới'}</title>
+    <title>Quản Lý Chuyến Xe - Vé Xe Miền Tây</title>
     <!-- Bootstrap 5.3 & Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-9 col-lg-7">
-                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+    <jsp:include page="../common/header.jsp" />
 
-                    <!-- ICON & TIÊU ĐỀ -->
-                    <div class="text-center mb-4">
-                        <div class="fs-1 text-primary mb-2">
-                            <i class="bi ${trip != null && trip.id != 0 ? 'bi-pencil-square text-warning' : 'bi-plus-circle text-primary'}"></i>
-                        </div>
-                        <h4 class="fw-bold text-dark mb-1">
-                            ${trip != null && trip.id != 0 ? 'Cập Nhật Chuyến Xe' : 'Thêm Chuyến Xe Mới'}
-                        </h4>
-                        <p class="text-secondary small mb-0">Thiết lập lịch trình chuyến xe, số ghế và giá vé</p>
+    <div class="container my-5" style="max-width: 680px;">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-5">
+
+            <!-- ICON & TIÊU ĐỀ -->
+            <div class="text-center mb-4">
+                <div class="fs-1 text-primary mb-2">
+                    <c:choose>
+                        <c:when test="${trip != null && trip.id != 0}">
+                            <i class="bi bi-pencil-square text-warning"></i>
+                        </c:when>
+                        <c:otherwise>
+                            <i class="bi bi-calendar-plus text-primary"></i>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">
+                    <c:choose>
+                        <c:when test="${trip != null && trip.id != 0}">Cập Nhật Chuyến Xe</c:when>
+                        <c:otherwise>Thêm Chuyến Xe Mới</c:otherwise>
+                    </c:choose>
+                </h4>
+                <p class="text-secondary small mb-0">Thiết lập lịch trình chuyến xe, số ghế và giá vé</p>
+            </div>
+
+            <!-- THÔNG BÁO LỖI -->
+            <c:if test="${not empty errorMsg}">
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Lỗi!</strong> ${errorMsg}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </c:if>
+
+            <!-- FORM NHẬP LIỆU -->
+            <form action="${pageContext.request.contextPath}/admin/trip" method="POST">
+                <c:choose>
+                    <c:when test="${trip != null && trip.id != 0}">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="id" value="${trip.id}">
+                    </c:when>
+                    <c:otherwise>
+                        <input type="hidden" name="action" value="insert">
+                    </c:otherwise>
+                </c:choose>
+
+                <!-- TUYẾN ĐƯỜNG -->
+                <div class="mb-3">
+                    <label for="routeId" class="form-label fw-semibold text-secondary small">
+                        TUYẾN ĐƯỜNG: <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select py-2" id="routeId" name="routeId" required>
+                        <option value="">-- Chọn tuyến đường --</option>
+                        <c:forEach var="r" items="${routeList}">
+                            <option value="${r.id}" <c:if test="${trip != null && trip.route != null && trip.route.id == r.id}">selected</c:if>>
+                                ${r.fromLocation.name} &rarr; ${r.toLocation.name} (${r.distance} km)
+                            </option>
+                        </c:forEach>
+                    </select>
+                </div>
+
+                <!-- XE VẬN HÀNH -->
+                <div class="mb-3">
+                    <label for="vehicleId" class="form-label fw-semibold text-secondary small">
+                        XE VẬN HÀNH: <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select py-2" id="vehicleId" name="vehicleId" required>
+                        <option value="">-- Chọn xe phục vụ --</option>
+                        <c:forEach var="v" items="${vehicleList}">
+                            <option value="${v.id}" <c:if test="${trip != null && trip.vehicle != null && trip.vehicle.id == v.id}">selected</c:if>>
+                                ${v.licensePlate} - ${v.type} (${v.totalSeats} chỗ)
+                            </option>
+                        </c:forEach>
+                    </select>
+                </div>
+
+                <c:set var="depVal" value="" />
+                <c:if test="${trip != null && trip.departureTime != null}">
+                    <c:set var="depVal" value="${trip.departureTime.toString().substring(0,16).replace(' ', 'T')}" />
+                </c:if>
+                <c:set var="arrVal" value="" />
+                <c:if test="${trip != null && trip.arrivalTime != null}">
+                    <c:set var="arrVal" value="${trip.arrivalTime.toString().substring(0,16).replace(' ', 'T')}" />
+                </c:if>
+                <c:set var="seatsVal" value="34" />
+                <c:if test="${trip != null}">
+                    <c:set var="seatsVal" value="${trip.availableSeats}" />
+                </c:if>
+                <c:set var="priceVal" value="200000" />
+                <c:if test="${trip != null}">
+                    <c:set var="priceVal" value="${trip.price}" />
+                </c:if>
+
+                <div class="row">
+                    <!-- GIỜ KHỞI HÀNH -->
+                    <div class="col-md-6 mb-3">
+                        <label for="departureTime" class="form-label fw-semibold text-secondary small">
+                            GIỜ KHỞI HÀNH: <span class="text-danger">*</span>
+                        </label>
+                        <input type="datetime-local" class="form-control py-2" id="departureTime" name="departureTime" 
+                               value="${depVal}" required>
                     </div>
 
-                    <!-- THÔNG BÁO LỖI -->
-                    <c:if test="${not empty errorMsg}">
-                        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Lỗi!</strong> ${errorMsg}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    </c:if>
-
-                    <!-- FORM SUBMIT -->
-                    <form action="${pageContext.request.contextPath}/admin/trip" method="POST">
-                        
-                        <input type="hidden" name="action" value="${trip != null && trip.id != 0 ? 'update' : 'insert'}">
-                        <c:if test="${trip != null && trip.id != 0}">
-                            <input type="hidden" name="id" value="${trip.id}">
-                        </c:if>
-
-                        <div class="row">
-                            <!-- Route Dropdown -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    Tuyến Đường <span class="text-danger">*</span>
-                                </label>
-                                <select name="routeId" class="form-select" required autofocus>
-                                    <option value="">-- Chọn tuyến đường --</option>
-                                    <c:forEach var="r" items="${routeList}">
-                                        <option value="${r.id}" ${trip != null && trip.route != null && trip.route.id == r.id ? 'selected' : ''}>
-                                            ${r.fromLocation.name} → ${r.toLocation.name}
-                                        </option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-
-                            <!-- Vehicle Dropdown -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    Xe (Biển số xe) <span class="text-danger">*</span>
-                                </label>
-                                <select name="vehicleId" class="form-select" required>
-                                    <option value="">-- Chọn xe --</option>
-                                    <c:forEach var="v" items="${vehicleList}">
-                                        <option value="${v.id}" ${trip != null && trip.vehicle != null && trip.vehicle.id == v.id ? 'selected' : ''}>
-                                            ${v.licensePlate}
-                                        </option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Định dạng ngày giờ chuẩn cho input datetime-local -->
-                        <c:if test="${trip != null && trip.departureTime != null}">
-                            <fmt:formatDate value="${trip.departureTime}" pattern="yyyy-MM-dd'T'HH:mm" var="formattedDepTime"/>
-                        </c:if>
-                        <c:if test="${trip != null && trip.arrivalTime != null}">
-                            <fmt:formatDate value="${trip.arrivalTime}" pattern="yyyy-MM-dd'T'HH:mm" var="formattedArrTime"/>
-                        </c:if>
-
-                        <div class="row">
-                            <!-- Departure Time (datetime-local) -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    Thời Gian Khởi Hành <span class="text-danger">*</span>
-                                </label>
-                                <input type="datetime-local" id="departureTime" name="departureTime" class="form-control" 
-                                       value="${formattedDepTime}" required>
-                            </div>
-
-                            <!-- Arrival Time (datetime-local) -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    Thời Gian Đến Dự Kiến <span class="text-danger">*</span>
-                                </label>
-                                <input type="datetime-local" id="arrivalTime" name="arrivalTime" class="form-control" 
-                                       value="${formattedArrTime}" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <!-- Available Seats [15 - 59] -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    Số Ghế Trống [15 - 59] <span class="text-danger">*</span>
-                                </label>
-                                <input type="number" min="15" max="59" name="availableSeats" class="form-control" 
-                                       value="${trip != null && trip.availableSeats != 0 ? trip.availableSeats : '45'}" required>
-                            </div>
-
-                            <!-- Price -->
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-secondary">
-                                    Giá Vé (VNĐ) <span class="text-danger">*</span>
-                                </label>
-                                <input type="number" step="1000" min="1000" name="price" class="form-control" 
-                                       value="${trip != null && trip.price != 0.0 ? trip.price : ''}" 
-                                       placeholder="VD: 150000" required>
-                            </div>
-                        </div>
-
-                        <!-- Status -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small text-secondary">
-                                Trạng Thái Chuyến Xe <span class="text-danger">*</span>
-                            </label>
-                            <select name="status" class="form-select" required>
-                                <option value="Active" ${trip != null && trip.status == 'Active' ? 'selected' : ''}>Active (Đang hoạt động)</option>
-                                <option value="Delayed" ${trip != null && trip.status == 'Delayed' ? 'selected' : ''}>Delayed (Trễ chuyến)</option>
-                                <option value="Cancelled" ${trip != null && trip.status == 'Cancelled' ? 'selected' : ''}>Cancelled (Đã hủy)</option>
-                            </select>
-                        </div>
-
-                        <!-- NÚT LƯU & QUAY LẠI -->
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm">
-                                <i class="bi bi-check-lg me-1"></i> ${trip != null && trip.id != 0 ? 'Lưu Thay Đổi' : 'Thêm Chuyến Xe'}
-                            </button>
-                            <a href="${pageContext.request.contextPath}/admin/trip" class="btn btn-light py-2 text-secondary fw-semibold">
-                                <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
-                            </a>
-                        </div>
-
-                    </form>
-
+                    <!-- GIỜ ĐẾN DỰ KIẾN -->
+                    <div class="col-md-6 mb-3">
+                        <label for="arrivalTime" class="form-label fw-semibold text-secondary small">
+                            GIỜ ĐẾN (DỰ KIẾN): <span class="text-danger">*</span>
+                        </label>
+                        <input type="datetime-local" class="form-control py-2" id="arrivalTime" name="arrivalTime" 
+                               value="${arrVal}" required>
+                    </div>
                 </div>
-            </div>
+
+                <div class="row">
+                    <!-- SỐ GHẾ TRỐNG -->
+                    <div class="col-md-6 mb-3">
+                        <label for="availableSeats" class="form-label fw-semibold text-secondary small">
+                            SỐ GHẾ TRỐNG: <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control py-2" id="availableSeats" name="availableSeats" min="0" max="59"
+                               value="${seatsVal}" required>
+                    </div>
+
+                    <!-- GIÁ VÉ -->
+                    <div class="col-md-6 mb-3">
+                        <label for="price" class="form-label fw-semibold text-secondary small">
+                            GIÁ VÉ (VNĐ): <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" step="1000" class="form-control py-2" id="price" name="price" 
+                               value="${priceVal}" required placeholder="Ví dụ: 180000">
+                    </div>
+                </div>
+
+                <!-- TRẠNG THÁI -->
+                <div class="mb-4">
+                    <label for="status" class="form-label fw-semibold text-secondary small">
+                        TRẠNG THÁI: <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select py-2" id="status" name="status" required>
+                        <option value="Sắp khởi hành" <c:if test="${trip != null && trip.status == 'Sắp khởi hành'}">selected</c:if>>Sắp khởi hành</option>
+                        <option value="Đang chạy" <c:if test="${trip != null && trip.status == 'Đang chạy'}">selected</c:if>>Đang chạy</option>
+                        <option value="Hoàn thành" <c:if test="${trip != null && trip.status == 'Hoàn thành'}">selected</c:if>>Hoàn thành</option>
+                        <option value="Đã hủy" <c:if test="${trip != null && trip.status == 'Đã hủy'}">selected</c:if>>Đã hủy</option>
+                    </select>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="${pageContext.request.contextPath}/admin/trip" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="bi bi-arrow-left me-1"></i> Quay lại
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">
+                        <i class="bi bi-check2-circle me-1"></i> Lưu Chuyến Xe
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Script JavaScript tự động set min cho datetime-local -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            const currentDateTime = now.toISOString().slice(0, 16);
-            
-            const depInput = document.getElementById("departureTime");
-            const arrInput = document.getElementById("arrivalTime");
-            
-            if (depInput && !depInput.value) {
-                depInput.min = currentDateTime;
-            }
-            if (arrInput && !arrInput.value) {
-                arrInput.min = currentDateTime;
-            }
-        });
-    </script>
+    <jsp:include page="../common/footer.jsp" />
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

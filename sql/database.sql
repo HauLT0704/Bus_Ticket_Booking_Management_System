@@ -1,4 +1,4 @@
-﻿-- =========================================================
+-- =========================================================
 -- HỆ THỐNG QUẢN LÝ ĐẶT VÉ XE KHÁCH (BUS TICKET MANAGEMENT SYSTEM)
 -- Dữ liệu: Chuyên tuyến MIỀN TÂY (Đồng bằng Sông Cửu Long) & SÀI GÒN
 -- Tinh giản: Bảng Locations chỉ lưu Tên Tỉnh / Thành phố (Bỏ cột Province)
@@ -53,7 +53,8 @@ CREATE TABLE Vehicles (
     TotalSeats INT NOT NULL DEFAULT 40,
     Type NVARCHAR(50) NOT NULL, -- 'Limousine VIP', 'Giường nằm', 'Ghế ngồi'
     Status NVARCHAR(50) NOT NULL DEFAULT N'Hoạt động',
-    CreatedAt DATETIME DEFAULT GETDATE()
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    CONSTRAINT CK_Vehicles_TotalSeats CHECK (TotalSeats > 0)
 );
 GO
 
@@ -66,7 +67,11 @@ CREATE TABLE Routes (
     Duration INT NOT NULL, -- phút
     CreatedAt DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_Routes_FromLocation FOREIGN KEY (FromLocationId) REFERENCES Locations(Id),
-    CONSTRAINT FK_Routes_ToLocation FOREIGN KEY (ToLocationId) REFERENCES Locations(Id)
+    CONSTRAINT FK_Routes_ToLocation FOREIGN KEY (ToLocationId) REFERENCES Locations(Id),
+    CONSTRAINT CK_Routes_DifferentLocations CHECK (FromLocationId <> ToLocationId),
+    CONSTRAINT UQ_Routes_From_To UNIQUE (FromLocationId, ToLocationId),
+    CONSTRAINT CK_Routes_Distance CHECK (Distance > 0),
+    CONSTRAINT CK_Routes_Duration CHECK (Duration > 0)
 );
 GO
 
@@ -82,7 +87,9 @@ CREATE TABLE Trips (
     Status NVARCHAR(50) NOT NULL DEFAULT N'Sắp khởi hành',
     CreatedAt DATETIME DEFAULT GETDATE(),
     CONSTRAINT FK_Trips_Route FOREIGN KEY (RouteId) REFERENCES Routes(Id),
-    CONSTRAINT FK_Trips_Vehicle FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+    CONSTRAINT FK_Trips_Vehicle FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
+    CONSTRAINT CK_Trips_AvailableSeats CHECK (AvailableSeats >= 0),
+    CONSTRAINT CK_Trips_Price CHECK (Price >= 0)
 );
 GO
 
@@ -248,22 +255,65 @@ INSERT INTO Trips (RouteId, VehicleId, DepartureTime, ArrivalTime, AvailableSeat
 (3, 5, DATEADD(hour, 8, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 300, DATEADD(hour, 8, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 210000.00, N'Sắp khởi hành'),
 (7, 10, DATEADD(hour, 20, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 450, DATEADD(hour, 20, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 260000.00, N'Sắp khởi hành'),
 (19, 5, DATEADD(hour, 8, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 150, DATEADD(hour, 8, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 120000.00, N'Sắp khởi hành'),
-(21, 10, DATEADD(hour, 14, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 240, DATEADD(hour, 14, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 160000.00, N'Sắp khởi hành');
+(21, 10, DATEADD(hour, 14, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 240, DATEADD(hour, 14, DATEADD(day, 2, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 160000.00, N'Sắp khởi hành'),
+
+-- ===== DỮ LIỆU CHUYẾN NỐI TRUNG CHUYỂN & TUYẾN DÀI (CẦN THƠ <-> KIÊN GIANG / CÀ MAU / TP.HCM) HÔM NAY & NGÀY MAI ĐỂ TEST GHÉP CHUYẾN =====
+(8, 10, DATEADD(hour, 4, GETDATE()), DATEADD(minute, 450 + 240, GETDATE()), 34, 260000.00, N'Sắp khởi hành'),  -- Cà Mau -> TP.HCM (Tuyến dài đi ngang Cần Thơ)
+(19, 5, DATEADD(hour, 6, GETDATE()), DATEADD(minute, 150 + 360, GETDATE()), 34, 120000.00, N'Sắp khởi hành'),  -- Cần Thơ -> Kiên Giang (nối sau chuyến SG -> CT)
+(21, 10, DATEADD(hour, 6, GETDATE()), DATEADD(minute, 240 + 360, GETDATE()), 34, 160000.00, N'Sắp khởi hành'), -- Cần Thơ -> Cà Mau (nối sau chuyến SG -> CT)
+(20, 5, DATEADD(hour, 1, GETDATE()), DATEADD(minute, 150 + 60, GETDATE()), 34, 120000.00, N'Sắp khởi hành'),   -- Kiên Giang -> Cần Thơ (nối trước chuyến CT -> SG)
+(22, 10, DATEADD(hour, 1, GETDATE()), DATEADD(minute, 240 + 60, GETDATE()), 34, 160000.00, N'Sắp khởi hành'),  -- Cà Mau -> Cần Thơ (nối trước chuyến CT -> SG)
+(8, 10, DATEADD(hour, 8, DATEADD(day, 1, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 450, DATEADD(hour, 8, DATEADD(day, 1, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 260000.00, N'Sắp khởi hành'),
+(19, 5, DATEADD(hour, 10, DATEADD(day, 1, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 150, DATEADD(hour, 10, DATEADD(day, 1, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 120000.00, N'Sắp khởi hành'),
+(21, 10, DATEADD(hour, 10, DATEADD(day, 1, CAST(CAST(GETDATE() AS DATE) AS DATETIME))), DATEADD(minute, 240, DATEADD(hour, 10, DATEADD(day, 1, CAST(CAST(GETDATE() AS DATE) AS DATETIME)))), 34, 160000.00, N'Sắp khởi hành');
 GO
 
 -- 6. Customers
 INSERT INTO Customers (FullName, Phone, Email, IdCard) VALUES
-(N'Lê Hoàng Long', '0909112233', 'long.le@gmail.com', '079202001234'),
-(N'Phạm Minh Tuấn', '0938445566', 'tuan.pm@gmail.com', '079201004321'),
-(N'Nguyễn Thị Mai', '0918776655', 'mai.nguyen@gmail.com', '079203009876');
+(N'Lê Hoàng Long', '0909112233', 'long.le@gmail.com', '079202001234'),      -- ID 1
+(N'Phạm Minh Tuấn', '0938445566', 'tuan.pm@gmail.com', '079201004321'),     -- ID 2
+(N'Nguyễn Thị Mai', '0918776655', 'mai.nguyen@gmail.com', '079203009876'),  -- ID 3
+(N'Nguyễn Văn An', '0912345678', 'an.nguyen@gmail.com', '079200001122'),    -- ID 4 (Khớp user1)
+(N'Lê Văn Boom', '0999888777', 'boom@gmail.com', '079204009999');           -- ID 5 (Khớp user_locked - Vi phạm hủy vé 3 lần)
 GO
 
--- 7. Tickets
+-- 7. Tickets (Dữ liệu vé đa dạng các tuyến phục vụ Báo cáo doanh thu & minh chứng khóa tài khoản vi phạm)
 INSERT INTO Tickets (TripId, CustomerId, SeatNumber, BookingTime, Status, TotalPrice) VALUES
+-- Tuyến TP.HCM -> Cần Thơ (Trip 1 & Trip 2)
 (1, 1, 'A01', GETDATE(), N'Đã thanh toán', 220000.00),
 (1, 1, 'A02', GETDATE(), N'Đã thanh toán', 220000.00),
 (2, 2, 'B05', GETDATE(), N'Đã thanh toán', 175000.00),
-(6, 3, 'A06', GETDATE(), N'Đã thanh toán', 210000.00);
+(2, 4, 'A03', GETDATE(), N'Đã thanh toán', 175000.00),
+-- Tuyến Cần Thơ -> TP.HCM (Trip 4)
+(4, 3, 'A01', GETDATE(), N'Đã thanh toán', 175000.00),
+(4, 3, 'A02', GETDATE(), N'Đã thanh toán', 175000.00),
+-- Tuyến TP.HCM -> Kiên Giang (Trip 6)
+(6, 3, 'A06', GETDATE(), N'Đã thanh toán', 210000.00),
+(6, 1, 'A07', GETDATE(), N'Đã thanh toán', 210000.00),
+-- Tuyến TP.HCM -> An Giang (Trip 8)
+(8, 2, 'B01', GETDATE(), N'Đã thanh toán', 210000.00),
+-- Tuyến TP.HCM -> Cà Mau (Trip 10)
+(10, 4, 'A01', GETDATE(), N'Đã thanh toán', 340000.00),
+(10, 4, 'A02', GETDATE(), N'Đã thanh toán', 340000.00),
+-- Tuyến TP.HCM -> Bạc Liêu (Trip 12)
+(12, 1, 'A04', GETDATE(), N'Đã thanh toán', 230000.00),
+-- Minh chứng 3 vé Đã hủy của khách hàng Lê Văn Boom (CustomerId = 5 -> Tài khoản user_locked bị khóa)
+(1, 5, 'B01', DATEADD(hour, -5, GETDATE()), N'Đã hủy', 220000.00),
+(2, 5, 'B02', DATEADD(hour, -4, GETDATE()), N'Đã hủy', 175000.00),
+(3, 5, 'B03', DATEADD(hour, -3, GETDATE()), N'Đã hủy', 220000.00);
 GO
 
-PRINT N'Cập nhật thành công: Bỏ Province, chỉ lưu Tỉnh, Mật khẩu MD5 100%!';
+-- Đồng bộ chính xác 100% số ghế trống (AvailableSeats) = Tổng ghế của xe (TotalSeats) - Số vé đã đặt hợp lệ
+UPDATE t
+SET t.AvailableSeats = v.TotalSeats - ISNULL(booked.BookedCount, 0)
+FROM Trips t
+JOIN Vehicles v ON t.VehicleId = v.Id
+LEFT JOIN (
+    SELECT TripId, COUNT(*) AS BookedCount
+    FROM Tickets
+    WHERE Status != N'Đã hủy'
+    GROUP BY TripId
+) booked ON t.Id = booked.TripId;
+GO
+
+PRINT N'Cập nhật thành công: Ràng buộc chuẩn, Đồng bộ AvailableSeats 100%, Mật khẩu MD5 100%!';
