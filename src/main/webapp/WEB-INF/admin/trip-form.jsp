@@ -132,7 +132,7 @@
                         <label for="availableSeats" class="form-label fw-semibold text-secondary small">
                             SỐ GHẾ TRỐNG: <span class="text-danger">*</span>
                         </label>
-                        <input type="number" class="form-control py-2" id="availableSeats" name="availableSeats" min="0" max="59"
+                        <input type="number" class="form-control py-2" id="availableSeats" name="availableSeats" min="0" 
                                value="${seatsVal}" required>
                     </div>
 
