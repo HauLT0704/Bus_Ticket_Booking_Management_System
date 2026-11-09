@@ -48,7 +48,7 @@
             </c:if>
 
             <!-- FORM NHẬP LIỆU -->
-            <form action="${pageContext.request.contextPath}/admin/trip" method="POST">
+            <form action="${pageContext.request.contextPath}/admin/trip" method="POST" novalidate>
                 <c:choose>
                     <c:when test="${trip != null && trip.id != 0}">
                         <input type="hidden" name="action" value="update">
@@ -142,7 +142,8 @@
                             GIÁ VÉ (VNĐ): <span class="text-danger">*</span>
                         </label>
                         <input type="number" step="1000" class="form-control py-2" id="price" name="price" 
-                               value="${priceVal}" required placeholder="Ví dụ: 180000">
+                               value="${priceVal}" required placeholder="Từ 100.000 đến 1.000.000">
+                        <div class="form-text text-muted small">Quy định từ 100.000 đến 1.000.000 VNĐ</div>
                     </div>
                 </div>
 

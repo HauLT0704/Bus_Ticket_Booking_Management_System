@@ -60,15 +60,23 @@ public class TripController extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/admin/trip-list.jsp").forward(request, response);
             
         } else if (action.equals("edit")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Trip trip = tripDAO.getById(id);
-            List<Route> routeList = tripDAO.getAllRoutes();
-            List<Vehicle> vehicleList = tripDAO.getAllVehicles();
-            
-            request.setAttribute("trip", trip);
-            request.setAttribute("routeList", routeList);
-            request.setAttribute("vehicleList", vehicleList);
-            request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                Trip trip = tripDAO.getById(id);
+                if (trip == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=not_found");
+                    return;
+                }
+                List<Route> routeList = tripDAO.getAllRoutes();
+                List<Vehicle> vehicleList = tripDAO.getAllVehicles();
+                
+                request.setAttribute("trip", trip);
+                request.setAttribute("routeList", routeList);
+                request.setAttribute("vehicleList", vehicleList);
+                request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=invalid_id");
+            }
             
         } else if (action.equals("add")) {
             List<Route> routeList = tripDAO.getAllRoutes();
@@ -79,12 +87,21 @@ public class TripController extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
             
         } else if (action.equals("delete")) {
-            int id = Integer.parseInt(request.getParameter("id"));
-            boolean deleted = tripDAO.delete(id);
-            if (deleted) {
-                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=deleted");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=delete_error");
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                Trip trip = tripDAO.getById(id);
+                if (trip == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=not_found");
+                    return;
+                }
+                boolean deleted = tripDAO.delete(id);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=invalid_id");
             }
         }
     }
@@ -108,36 +125,67 @@ public class TripController extends HttpServlet {
         TripDAO tripDAO = new TripDAO();
         
         String action = request.getParameter("action");
-        int routeId = Integer.parseInt(request.getParameter("routeId"));
-        int vehicleId = Integer.parseInt(request.getParameter("vehicleId"));
-        
-        String depParam = request.getParameter("departureTime");
-        String arrParam = request.getParameter("arrivalTime");
-        
-        if (depParam == null || depParam.isEmpty() || arrParam == null || arrParam.isEmpty()) {
+        int routeId = 0;
+        int vehicleId = 0;
+        int availableSeats = -1;
+        double price = -1;
+        int currentId = 0;
+        Timestamp departureTime = null;
+        Timestamp arrivalTime = null;
+        boolean hasParseError = false;
+
+        try {
+            routeId = Integer.parseInt(request.getParameter("routeId"));
+            vehicleId = Integer.parseInt(request.getParameter("vehicleId"));
+            availableSeats = Integer.parseInt(request.getParameter("availableSeats"));
+            price = Double.parseDouble(request.getParameter("price"));
+
+            if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
+                currentId = Integer.parseInt(request.getParameter("id"));
+            }
+
+            String depParam = request.getParameter("departureTime");
+            String arrParam = request.getParameter("arrivalTime");
+
+            if (depParam == null || depParam.isEmpty() || arrParam == null || arrParam.isEmpty()) {
+                hasParseError = true;
+            } else {
+                String depTimeStr = depParam.replace("T", " ");
+                if (depParam.length() == 16) {
+                    depTimeStr = depTimeStr + ":00";
+                }
+                String arrTimeStr = arrParam.replace("T", " ");
+                if (arrParam.length() == 16) {
+                    arrTimeStr = arrTimeStr + ":00";
+                }
+                departureTime = Timestamp.valueOf(depTimeStr);
+                arrivalTime = Timestamp.valueOf(arrTimeStr);
+            }
+        } catch (Exception e) {
+            hasParseError = true;
+        }
+
+        if (hasParseError || departureTime == null || arrivalTime == null || routeId <= 0 || vehicleId <= 0) {
             List<Route> routeList = tripDAO.getAllRoutes();
             List<Vehicle> vehicleList = tripDAO.getAllVehicles();
             request.setAttribute("routeList", routeList);
             request.setAttribute("vehicleList", vehicleList);
-            request.setAttribute("errorMsg", "Vui lòng chọn đầy đủ thời gian khởi hành và thời gian đến!");
+            request.setAttribute("errorMsg", "Dữ liệu nhập không hợp lệ! Vui lòng chọn tuyến xe, loại xe, thời gian hợp lệ và nhập đúng định dạng số.");
             request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
             return;
         }
-        
-        String depTimeStr = depParam.replace("T", " ");
-        if (depParam.length() == 16) {
-            depTimeStr = depTimeStr + ":00";
+
+        if ("update".equals(action)) {
+            if (currentId <= 0 || tripDAO.getById(currentId) == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=not_found");
+                return;
+            }
         }
-        String arrTimeStr = arrParam.replace("T", " ");
-        if (arrParam.length() == 16) {
-            arrTimeStr = arrTimeStr + ":00";
-        }
-        Timestamp departureTime = Timestamp.valueOf(depTimeStr);
-        Timestamp arrivalTime = Timestamp.valueOf(arrTimeStr);
-        
-        int availableSeats = Integer.parseInt(request.getParameter("availableSeats"));
-        double price = Double.parseDouble(request.getParameter("price"));
+
         String status = request.getParameter("status");
+        if (status == null || status.trim().isEmpty()) {
+            status = "Sắp khởi hành";
+        }
         
         Timestamp nowWithTolerance = new Timestamp(System.currentTimeMillis() - 300000);
         int maxVehicleSeats = tripDAO.getVehicleMaxSeats(vehicleId);
@@ -154,9 +202,9 @@ public class TripController extends HttpServlet {
         } else if (availableSeats < 0 || availableSeats > maxVehicleSeats) {
             isInvalid = true;
             errorMessage = "Số ghế trống phải từ 0 đến tối đa " + maxVehicleSeats + " ghế (theo sức chứa của xe đã chọn)!";
-        } else if (price <= 0) {
+        } else if (price < 100000 || price > 1000000) {
             isInvalid = true;
-            errorMessage = "Giá vé phải lớn hơn 0 VNĐ!";
+            errorMessage = "Giá vé phải nằm trong khoảng từ 100.000 đến 1.000.000 VNĐ!";
         }
         
         if (isInvalid) {
@@ -176,8 +224,8 @@ public class TripController extends HttpServlet {
             trip.setPrice(price);
             trip.setStatus(status);
             
-            if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
-                trip.setId(Integer.parseInt(request.getParameter("id")));
+            if (currentId > 0) {
+                trip.setId(currentId);
             }
             
             request.setAttribute("trip", trip);
@@ -206,7 +254,7 @@ public class TripController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/trip?msg=added");
             
         } else if ("update".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
+            int id = currentId;
             Trip trip = new Trip();
             trip.setId(id);
             

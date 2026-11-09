@@ -307,7 +307,13 @@ public class BookingController extends HttpServlet {
             return;
         }
 
-        int tripId = Integer.parseInt(tripIdStr.trim());
+        int tripId;
+        try {
+            tripId = Integer.parseInt(tripIdStr.trim());
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/search?error=notfound");
+            return;
+        }
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
         if (trip.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/search?error=notfound");
@@ -401,8 +407,15 @@ public class BookingController extends HttpServlet {
             return;
         }
 
-        int tripId = Integer.parseInt(tripIdStr);
-        int customerId = Integer.parseInt(customerIdStr);
+        int tripId;
+        int customerId;
+        try {
+            tripId = Integer.parseInt(tripIdStr.trim());
+            customerId = Integer.parseInt(customerIdStr.trim());
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/search");
+            return;
+        }
 
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
 

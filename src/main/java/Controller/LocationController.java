@@ -60,23 +60,33 @@ public class LocationController extends HttpServlet {
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
                 Location loc = locationDAO.getById(id);
+                if (loc == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=not_found");
+                    return;
+                }
                 request.setAttribute("location", loc);
                 request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
             } catch (NumberFormatException e) {
-                response.sendRedirect(request.getContextPath() + "/admin/location");
+                response.sendRedirect(request.getContextPath() + "/admin/location?msg=invalid_id");
             }
         } else if (action.equals("add")) {
             request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
         } else if (action.equals("delete")) {
-            boolean deleted = false;
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
-                deleted = locationDAO.delete(id);
-            } catch (NumberFormatException ignored) {}
-            if (deleted) {
-                response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/admin/location?msg=delete_error");
+                Location loc = locationDAO.getById(id);
+                if (loc == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=not_found");
+                    return;
+                }
+                boolean deleted = locationDAO.delete(id);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/location?msg=invalid_id");
             }
         }
     }
@@ -147,6 +157,10 @@ public class LocationController extends HttpServlet {
             locationDAO.insert(loc);
             response.sendRedirect(request.getContextPath() + "/admin/location?msg=added");
         } else if ("update".equals(action)) {
+            if (id <= 0 || locationDAO.getById(id) == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/location?msg=not_found");
+                return;
+            }
             Location loc = new Location(id, cleanName);
             locationDAO.update(loc);
             response.sendRedirect(request.getContextPath() + "/admin/location?msg=updated");

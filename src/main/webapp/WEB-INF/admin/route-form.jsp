@@ -46,7 +46,7 @@
             </c:if>
 
             <!-- FORM NHẬP LIỆU -->
-            <form action="${pageContext.request.contextPath}/admin/route" method="POST">
+            <form action="${pageContext.request.contextPath}/admin/route" method="POST" novalidate>
                 <c:choose>
                     <c:when test="${route != null && route.id != 0}">
                         <input type="hidden" name="action" value="update">

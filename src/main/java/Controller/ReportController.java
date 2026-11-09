@@ -75,6 +75,10 @@ public class ReportController extends HttpServlet {
             ReportDAO dao = new ReportDAO();
 
             Map<String, Object> tripInfo = dao.getTripSummary(tripId);
+            if (tripInfo == null || tripInfo.isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=not_found");
+                return;
+            }
             List<Map<String, Object>> customerList = dao.getCustomersByTrip(tripId);
 
             request.setAttribute("trip", tripInfo);
@@ -83,7 +87,7 @@ public class ReportController extends HttpServlet {
 
             request.getRequestDispatcher("/WEB-INF/admin/trip-customer-list.jsp").forward(request, response);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/admin/trip");
+            response.sendRedirect(request.getContextPath() + "/admin/trip?msg=invalid_id");
         }
     }
 

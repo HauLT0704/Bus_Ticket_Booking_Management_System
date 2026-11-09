@@ -54,23 +54,33 @@ public class VehicleController extends HttpServlet {
                 try {
                     int idToEdit = Integer.parseInt(request.getParameter("id"));
                     Vehicle existingVehicle = vehicleDAO.getVehicleById(idToEdit);
+                    if (existingVehicle == null) {
+                        response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=not_found");
+                        return;
+                    }
                     request.setAttribute("vehicle", existingVehicle);
                     request.getRequestDispatcher("/WEB-INF/admin/vehicle-form.jsp").forward(request, response);
                 } catch (NumberFormatException e) {
-                    response.sendRedirect(request.getContextPath() + "/admin/vehicle");
+                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=invalid_id");
                 }
                 break;
 
             case "delete":
-                boolean deleted = false;
                 try {
                     int idToDelete = Integer.parseInt(request.getParameter("id"));
-                    deleted = vehicleDAO.deleteVehicle(idToDelete);
-                } catch (NumberFormatException ignored) {}
-                if (deleted) {
-                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=deleted");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=delete_error");
+                    Vehicle existingVehicle = vehicleDAO.getVehicleById(idToDelete);
+                    if (existingVehicle == null) {
+                        response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=not_found");
+                        return;
+                    }
+                    boolean deleted = vehicleDAO.deleteVehicle(idToDelete);
+                    if (deleted) {
+                        response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=deleted");
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=delete_error");
+                    }
+                } catch (NumberFormatException e) {
+                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=invalid_id");
                 }
                 break;
 
@@ -157,6 +167,10 @@ public class VehicleController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=added");
 
         } else if ("update".equals(action)) {
+            if (id <= 0 || vehicleDAO.getVehicleById(id) == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=not_found");
+                return;
+            }
             Vehicle v = new Vehicle(id, cleanPlate, totalSeats, type, status);
             vehicleDAO.updateVehicle(v);
             response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=updated");

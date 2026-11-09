@@ -54,23 +54,33 @@ public class CustomerController extends HttpServlet {
                 try {
                     int idToEdit = Integer.parseInt(request.getParameter("id"));
                     Customer existingCustomer = customerDAO.getCustomerById(idToEdit);
+                    if (existingCustomer == null) {
+                        response.sendRedirect(request.getContextPath() + "/admin/customer?msg=not_found");
+                        return;
+                    }
                     request.setAttribute("customer", existingCustomer);
                     request.getRequestDispatcher("/WEB-INF/admin/customer-form.jsp").forward(request, response);
                 } catch (NumberFormatException e) {
-                    response.sendRedirect(request.getContextPath() + "/admin/customer");
+                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=invalid_id");
                 }
                 break;
 
             case "delete":
-                boolean deleted = false;
                 try {
                     int idToDelete = Integer.parseInt(request.getParameter("id"));
-                    deleted = customerDAO.deleteCustomer(idToDelete);
-                } catch (NumberFormatException ignored) {}
-                if (deleted) {
-                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=deleted");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=delete_error");
+                    Customer existingCustomer = customerDAO.getCustomerById(idToDelete);
+                    if (existingCustomer == null) {
+                        response.sendRedirect(request.getContextPath() + "/admin/customer?msg=not_found");
+                        return;
+                    }
+                    boolean deleted = customerDAO.deleteCustomer(idToDelete);
+                    if (deleted) {
+                        response.sendRedirect(request.getContextPath() + "/admin/customer?msg=deleted");
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/admin/customer?msg=delete_error");
+                    }
+                } catch (NumberFormatException e) {
+                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=invalid_id");
                 }
                 break;
 
@@ -150,6 +160,10 @@ public class CustomerController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/customer?msg=added");
 
         } else if ("update".equals(action)) {
+            if (id <= 0 || customerDAO.getCustomerById(id) == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/customer?msg=not_found");
+                return;
+            }
             Customer c = new Customer(id, fullName.trim(), cleanPhone, email, idCard);
             customerDAO.updateCustomer(c);
             response.sendRedirect(request.getContextPath() + "/admin/customer?msg=updated");

@@ -41,6 +41,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
+        <c:if test="${param.msg == 'not_found'}">
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-octagon-fill me-2"></i> <strong>Lỗi!</strong> Tuyến đường yêu cầu không tồn tại trong hệ thống!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
+        <c:if test="${param.msg == 'invalid_id'}">
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i> <strong>Cảnh báo!</strong> Mã tuyến đường trên đường dẫn không hợp lệ!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
             <div>

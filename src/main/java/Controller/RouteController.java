@@ -61,12 +61,16 @@ public class RouteController extends HttpServlet {
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
                 Route route = routeDAO.getById(id);
+                if (route == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=not_found");
+                    return;
+                }
                 List<Location> locationList = routeDAO.getAllLocations();
                 request.setAttribute("route", route);
                 request.setAttribute("locationList", locationList);
                 request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
             } catch (NumberFormatException e) {
-                response.sendRedirect(request.getContextPath() + "/admin/route");
+                response.sendRedirect(request.getContextPath() + "/admin/route?msg=invalid_id");
             }
             
         } else if (action.equals("add")) {
@@ -75,15 +79,21 @@ public class RouteController extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
             
         } else if (action.equals("delete")) {
-            boolean deleted = false;
             try {
                 int id = Integer.parseInt(request.getParameter("id"));
-                deleted = routeDAO.delete(id);
-            } catch (NumberFormatException ignored) {}
-            if (deleted) {
-                response.sendRedirect(request.getContextPath() + "/admin/route?msg=deleted");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/admin/route?msg=delete_error");
+                Route route = routeDAO.getById(id);
+                if (route == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=not_found");
+                    return;
+                }
+                boolean deleted = routeDAO.delete(id);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/route?msg=invalid_id");
             }
         }
     }
@@ -180,7 +190,11 @@ public class RouteController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/route?msg=added");
 
         } else if ("update".equals(action)) {
-            int id = Integer.parseInt(request.getParameter("id"));
+            if (currentId <= 0 || routeDAO.getById(currentId) == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/route?msg=not_found");
+                return;
+            }
+            int id = currentId;
             Route route = new Route();
             route.setId(id);
 
