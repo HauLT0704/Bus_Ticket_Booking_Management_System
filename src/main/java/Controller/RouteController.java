@@ -13,7 +13,6 @@ import model.Location;
 import model.Route;
 import model.User;
 import util.PaginationUtil;
-import util.RouteDistanceHelper;
 
 /**
  * Controller Quản lý Tuyến đường (kèm phân trang)
@@ -144,22 +143,26 @@ public class RouteController extends HttpServlet {
         double distance = 0;
         int duration = 0;
         int currentId = 0;
+        boolean hasParseError = false;
 
         try {
             fromLocationId = Integer.parseInt(request.getParameter("fromLocationId"));
             toLocationId = Integer.parseInt(request.getParameter("toLocationId"));
             if (request.getParameter("distance") != null && !request.getParameter("distance").trim().isEmpty()) {
                 distance = Double.parseDouble(request.getParameter("distance").trim());
+            } else {
+                hasParseError = true;
             }
             if (request.getParameter("duration") != null && !request.getParameter("duration").trim().isEmpty()) {
                 duration = Integer.parseInt(request.getParameter("duration").trim());
+            } else {
+                hasParseError = true;
             }
             if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
                 currentId = Integer.parseInt(request.getParameter("id"));
             }
         } catch (NumberFormatException e) {
-            distance = -1;
-            duration = -1;
+            hasParseError = true;
         }
 
         List<Location> locationList = routeDAO.getAllLocations();
@@ -170,18 +173,28 @@ public class RouteController extends HttpServlet {
             if (loc.getId() == toLocationId) toName = loc.getName();
         }
 
-        // Tự động lấy khoảng cách & thời gian chuẩn nếu để trống
-        if (fromLocationId > 0 && toLocationId > 0 && fromLocationId != toLocationId) {
-            RouteDistanceHelper.RouteInfo stdInfo = RouteDistanceHelper.getStandardRoute(fromLocationId, toLocationId, fromName, toName);
-            if (stdInfo != null) {
-                if (distance <= 0) distance = stdInfo.getDistance();
-                if (duration <= 0) duration = stdInfo.getDuration();
-            }
+        // Kiểm tra ràng buộc dữ liệu
+        boolean isInvalid = false;
+        String errorMessage = "";
+
+        if (hasParseError || fromLocationId <= 0 || toLocationId <= 0) {
+            isInvalid = true;
+            errorMessage = "Vui lòng chọn đầy đủ Điểm đi, Điểm đến và nhập đúng định dạng số!";
+        } else if (fromLocationId == toLocationId) {
+            isInvalid = true;
+            errorMessage = "Điểm đi và Điểm đến không được trùng nhau!";
+        } else if (distance < 20.0 || distance > 1000.0) {
+            isInvalid = true;
+            errorMessage = "Khoảng cách tuyến đường phải từ 20.0 km đến 1,000.0 km!";
+        } else if (duration < 30 || duration > 1440) {
+            isInvalid = true;
+            errorMessage = "Thời gian di chuyển dự kiến phải từ 30 phút đến 1,440 phút (tối đa 24 giờ)!";
+        } else if (routeDAO.existsByLocations(fromLocationId, toLocationId, currentId)) {
+            isInvalid = true;
+            errorMessage = "Tuyến đường giữa 2 địa điểm này đã tồn tại trong hệ thống!";
         }
 
-        // Kiểm tra ràng buộc logic
-        String validationError = RouteDistanceHelper.validateRoute(distance, duration, fromLocationId, toLocationId, fromName, toName);
-        if (validationError != null) {
+        if (isInvalid) {
             request.setAttribute("locationList", locationList);
 
             Route route = new Route();
@@ -194,25 +207,7 @@ public class RouteController extends HttpServlet {
             route.setToLocation(toLoc);
 
             request.setAttribute("route", route);
-            request.setAttribute("errorMsg", validationError);
-            request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
-            return;
-        }
-
-        if (routeDAO.existsByLocations(fromLocationId, toLocationId, currentId)) {
-            request.setAttribute("locationList", locationList);
-
-            Route route = new Route();
-            route.setId(currentId);
-            route.setDistance(distance);
-            route.setDuration(duration);
-            Location fromLoc = new Location(fromLocationId, fromName);
-            Location toLoc = new Location(toLocationId, toName);
-            route.setFromLocation(fromLoc);
-            route.setToLocation(toLoc);
-
-            request.setAttribute("route", route);
-            request.setAttribute("errorMsg", "Tuyến đường giữa 2 địa điểm này đã tồn tại trong hệ thống!");
+            request.setAttribute("errorMsg", errorMessage);
             request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
             return;
         }

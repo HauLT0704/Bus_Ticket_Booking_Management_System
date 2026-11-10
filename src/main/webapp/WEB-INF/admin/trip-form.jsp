@@ -113,13 +113,13 @@
                 <c:if test="${trip != null && trip.arrivalTime != null}">
                     <c:set var="arrVal" value="${trip.arrivalTime.toString().substring(0,16).replace(' ', 'T')}" />
                 </c:if>
-                <c:set var="seatsVal" value="34" />
-                <c:if test="${trip != null}">
+                <c:set var="seatsVal" value="" />
+                <c:if test="${trip != null && trip.availableSeats >= 0}">
                     <c:set var="seatsVal" value="${trip.availableSeats}" />
                 </c:if>
-                <c:set var="priceVal" value="200000" />
-                <c:if test="${trip != null}">
-                    <c:set var="priceVal" value="${trip.price}" />
+                <c:set var="priceVal" value="" />
+                <c:if test="${trip != null && trip.price > 0}">
+                    <fmt:formatNumber var="priceVal" value="${trip.price}" pattern="#0" />
                 </c:if>
 
                 <div class="row">
@@ -152,7 +152,10 @@
                         </label>
                         <input type="number" class="form-control py-2 <c:if test='${isDelete}'>bg-light text-muted</c:if>" 
                                id="availableSeats" name="availableSeats" min="0" 
-                               value="${seatsVal}" required <c:if test="${isDelete}">readonly</c:if>>
+                               value="${seatsVal}" required placeholder="Ví dụ: 34 (số ghế của xe)" <c:if test="${isDelete}">readonly</c:if>>
+                        <c:if test="${!isDelete}">
+                            <div class="form-text text-muted small">Nhập số ghế trống ban đầu (không vượt quá sức chứa xe)</div>
+                        </c:if>
                     </div>
 
                     <!-- GIÁ VÉ -->
@@ -162,7 +165,7 @@
                         </label>
                         <input type="number" step="1000" class="form-control py-2 <c:if test='${isDelete}'>bg-light text-muted</c:if>" 
                                id="price" name="price" 
-                               value="${priceVal}" required placeholder="Từ 100.000 đến 1.000.000" <c:if test="${isDelete}">readonly</c:if>>
+                               value="${priceVal}" required placeholder="Ví dụ: 150000 (từ 100.000 đến 1.000.000)" <c:if test="${isDelete}">readonly</c:if>>
                         <c:if test="${!isDelete}">
                             <div class="form-text text-muted small">Quy định từ 100.000 đến 1.000.000 VNĐ</div>
                         </c:if>
