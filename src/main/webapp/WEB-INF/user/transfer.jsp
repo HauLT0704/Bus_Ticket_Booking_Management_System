@@ -2,6 +2,8 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core"%>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt"%>
 <%@ include file="/WEB-INF/common/header.jsp"%>
+<jsp:useBean id="nowDate" class="java.util.Date" />
+<c:set var="minLeadTime" value="${nowDate.time + 3600000}" />
 
 <div class="container py-4">
 
@@ -94,10 +96,24 @@
                                         Ghế trống: <b class="text-success">${option.firstTrip.availableSeats} chỗ</b> &bull; 
                                         Giá: <b class="text-danger"><fmt:formatNumber value="${option.firstTrip.price}" pattern="#,##0"/> đ</b>
                                     </p>
-                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${option.firstTrip.id}" 
-                                       class="btn btn-outline-primary btn-sm w-100 fw-semibold">
-                                        <i class="bi bi-ticket-perforated me-1"></i> Chọn ghế chặng 1
-                                    </a>
+                                    <c:choose>
+                                        <c:when test="${option.firstTrip.departureTime.time <= nowDate.time}">
+                                            <button class="btn btn-secondary btn-sm w-100 fw-semibold" disabled title="Chuyến xe đã khởi hành">
+                                                <i class="bi bi-clock-history me-1"></i> Đã khởi hành
+                                            </button>
+                                        </c:when>
+                                        <c:when test="${option.firstTrip.departureTime.time < minLeadTime}">
+                                            <button class="btn btn-secondary btn-sm w-100 fw-semibold" disabled title="Đã đóng cổng đặt vé trực tuyến (dưới 60 phút)">
+                                                <i class="bi bi-hourglass-bottom me-1"></i> Đã đóng cổng đặt vé
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${option.firstTrip.id}" 
+                                               class="btn btn-outline-primary btn-sm w-100 fw-semibold">
+                                                <i class="bi bi-ticket-perforated me-1"></i> Chọn ghế chặng 1
+                                            </a>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </div>
 
@@ -128,10 +144,24 @@
                                         Ghế trống: <b class="text-success">${option.secondTrip.availableSeats} chỗ</b> &bull; 
                                         Giá: <b class="text-danger"><fmt:formatNumber value="${option.secondTrip.price}" pattern="#,##0"/> đ</b>
                                     </p>
-                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${option.secondTrip.id}" 
-                                       class="btn btn-outline-success btn-sm w-100 fw-semibold">
-                                        <i class="bi bi-ticket-perforated me-1"></i> Chọn ghế chặng 2
-                                    </a>
+                                    <c:choose>
+                                        <c:when test="${option.secondTrip.departureTime.time <= nowDate.time}">
+                                            <button class="btn btn-secondary btn-sm w-100 fw-semibold" disabled title="Chuyến xe đã khởi hành">
+                                                <i class="bi bi-clock-history me-1"></i> Đã khởi hành
+                                            </button>
+                                        </c:when>
+                                        <c:when test="${option.secondTrip.departureTime.time < minLeadTime}">
+                                            <button class="btn btn-secondary btn-sm w-100 fw-semibold" disabled title="Đã đóng cổng đặt vé trực tuyến (dưới 60 phút)">
+                                                <i class="bi bi-hourglass-bottom me-1"></i> Đã đóng cổng đặt vé
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${option.secondTrip.id}" 
+                                               class="btn btn-outline-success btn-sm w-100 fw-semibold">
+                                                <i class="bi bi-ticket-perforated me-1"></i> Chọn ghế chặng 2
+                                            </a>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </div>
                         </div>
@@ -187,9 +217,23 @@
                             <div class="text-danger fw-bold fs-4 mb-1">
                                 <fmt:formatNumber value="${pt.totalPrice}" pattern="#,##0"/> đ
                             </div>
-                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${pt.trip1Id}" class="btn btn-primary btn-sm px-4 fw-semibold">
-                                <i class="bi bi-check2-circle me-1"></i>Chọn Ghép Tuyến Này
-                            </a>
+                            <c:choose>
+                                <c:when test="${pt.trip1Dep.time <= nowDate.time}">
+                                    <button class="btn btn-secondary btn-sm px-4 fw-semibold" disabled title="Chuyến xe đã khởi hành">
+                                        <i class="bi bi-clock-history me-1"></i> Đã khởi hành
+                                    </button>
+                                </c:when>
+                                <c:when test="${pt.trip1Dep.time < minLeadTime}">
+                                    <button class="btn btn-secondary btn-sm px-4 fw-semibold" disabled title="Đã đóng cổng đặt vé trực tuyến (dưới 60 phút)">
+                                        <i class="bi bi-hourglass-bottom me-1"></i> Đóng cổng đặt vé
+                                    </button>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${pt.trip1Id}" class="btn btn-primary btn-sm px-4 fw-semibold">
+                                        <i class="bi bi-check2-circle me-1"></i>Chọn Ghép Tuyến Này
+                                    </a>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </div>
                 </div>

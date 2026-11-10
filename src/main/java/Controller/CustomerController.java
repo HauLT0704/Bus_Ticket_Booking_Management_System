@@ -1,6 +1,7 @@
 package Controller;
 
 import dao.CustomerDAO;
+import dao.UserDAO;
 import model.Customer;
 import model.User;
 import util.PaginationUtil;
@@ -21,6 +22,7 @@ import jakarta.servlet.http.HttpSession;
 public class CustomerController extends HttpServlet {
 
     private final CustomerDAO customerDAO = new CustomerDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -73,13 +75,29 @@ public class CustomerController extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/admin/customer?msg=not_found");
                         return;
                     }
-                    boolean deleted = customerDAO.deleteCustomer(idToDelete);
-                    if (deleted) {
-                        response.sendRedirect(request.getContextPath() + "/admin/customer?msg=deleted");
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/admin/customer?msg=delete_error");
-                    }
+                    request.setAttribute("customer", existingCustomer);
+                    request.getRequestDispatcher("/WEB-INF/admin/customer-delete.jsp").forward(request, response);
                 } catch (NumberFormatException e) {
+                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=invalid_id");
+                }
+                break;
+
+            case "lock":
+                try {
+                    int userIdToLock = Integer.parseInt(request.getParameter("userId"));
+                    userDAO.lockUser(userIdToLock);
+                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=user_locked");
+                } catch (Exception e) {
+                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=invalid_id");
+                }
+                break;
+
+            case "unlock":
+                try {
+                    int userIdToUnlock = Integer.parseInt(request.getParameter("userId"));
+                    userDAO.unlockUser(userIdToUnlock);
+                    response.sendRedirect(request.getContextPath() + "/admin/customer?msg=user_unlocked");
+                } catch (Exception e) {
                     response.sendRedirect(request.getContextPath() + "/admin/customer?msg=invalid_id");
                 }
                 break;
@@ -109,6 +127,34 @@ public class CustomerController extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+
+        // Xử lý XÓA khách hàng (Bằng phương thức POST chuẩn an toàn)
+        if ("delete".equals(action)) {
+            int idToDelete = 0;
+            String idParam = request.getParameter("id");
+            if (idParam != null && !idParam.trim().isEmpty()) {
+                try {
+                    idToDelete = Integer.parseInt(idParam.trim());
+                } catch (NumberFormatException ignored) {}
+            }
+            if (idToDelete <= 0) {
+                response.sendRedirect(request.getContextPath() + "/admin/customer?msg=invalid_id");
+                return;
+            }
+            Customer existingCustomer = customerDAO.getCustomerById(idToDelete);
+            if (existingCustomer == null) {
+                response.sendRedirect(request.getContextPath() + "/admin/customer?msg=not_found");
+                return;
+            }
+            boolean deleted = customerDAO.deleteCustomer(idToDelete);
+            if (deleted) {
+                response.sendRedirect(request.getContextPath() + "/admin/customer?msg=deleted");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/admin/customer?msg=delete_error");
+            }
+            return;
+        }
+
         String fullName = request.getParameter("fullName");
         String phone = request.getParameter("phone");
         String email = request.getParameter("email");

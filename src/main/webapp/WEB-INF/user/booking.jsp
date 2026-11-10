@@ -21,7 +21,25 @@
                     <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
                     <div>
                         <strong>Đã hủy vé thành công!</strong>
-                        Cảnh báo vi phạm: Bạn đã hủy <b>${param.cancelCount}/3</b> vé. Nếu hủy từ <b>3 vé trở lên</b>, tài khoản của bạn sẽ bị khóa tự động do vi phạm chính sách đặt vé!
+                        Cảnh báo vi phạm: Bạn đã hủy <b><c:out value="${param.cancelCount}"/>/3</b> vé. Nếu hủy từ <b>3 vé trở lên</b>, tài khoản của bạn sẽ bị khóa tự động do vi phạm chính sách đặt vé!
+                    </div>
+                </div>
+            </c:if>
+
+            <c:if test="${param.cancelMsg == 'unauthorized'}">
+                <div class="alert alert-danger d-flex align-items-center mb-4 shadow-sm d-print-none" role="alert">
+                    <i class="bi bi-shield-x fs-4 me-3"></i>
+                    <div>
+                        <strong>Từ chối thao tác:</strong> Bạn không có quyền hủy vé này vì vé không thuộc quyền sở hữu của bạn!
+                    </div>
+                </div>
+            </c:if>
+
+            <c:if test="${param.cancelMsg == 'already_cancelled'}">
+                <div class="alert alert-warning d-flex align-items-center mb-4 shadow-sm d-print-none" role="alert">
+                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                    <div>
+                        <strong>Thông báo:</strong> Vé này đã ở trạng thái đã hủy trước đó.
                     </div>
                 </div>
             </c:if>
@@ -43,6 +61,24 @@
                 </div>
 
                 <div class="card-body p-4">
+
+                    <!-- THÔNG TIN KHÁCH HÀNG -->
+                    <div class="p-3 mb-4 bg-light rounded-3 border">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <span class="text-muted small d-block">Họ và tên khách hàng:</span>
+                                <strong class="fs-6 text-primary">
+                                    <i class="bi bi-person-fill me-1"></i>${not empty customer.fullName ? customer.fullName : sessionScope.currentUser.fullName}
+                                </strong>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-muted small d-block">Số điện thoại liên hệ:</span>
+                                <strong class="fs-6 text-dark">
+                                    <i class="bi bi-telephone-fill me-1"></i>${not empty customer.phone ? customer.phone : sessionScope.currentUser.phone}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- THÔNG TIN CHUYẾN XE -->
                     <div class="row g-3 mb-4">
@@ -100,14 +136,19 @@
                                             <div class="d-flex justify-content-center gap-2">
                                                 <c:if test="${ticket.status != 'Đã hủy'}">
                                                     <a href="${pageContext.request.contextPath}/print-ticket?id=${ticket.id}"
-                                                       class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-printer me-1"></i>In vé
+                                                       target="_blank" class="btn btn-sm btn-outline-primary" title="In thẻ vé riêng cho ghế này">
+                                                        <i class="bi bi-printer me-1"></i>In riêng (Ghế ${ticket.seatNumber})
                                                     </a>
-                                                    <a href="${pageContext.request.contextPath}/booking/cancel?id=${ticket.id}&tripId=${trip.id}&customerId=${ticket.customerId}&tickets=${param.tickets}"
-                                                       class="btn btn-sm btn-outline-danger"
-                                                       onclick="return confirm('Bạn có chắc chắn muốn hủy vé #VE${ticket.id} (Ghế ${ticket.seatNumber}) không? Lưu ý: Hủy từ 3 vé trở lên sẽ bị khóa tài khoản!');">
-                                                        <i class="bi bi-x-circle me-1"></i>Hủy vé
-                                                    </a>
+                                                    <form action="${pageContext.request.contextPath}/booking/cancel" method="POST" class="d-inline"
+                                                          onsubmit="return confirm('Bạn có chắc chắn muốn hủy vé #VE${ticket.id} (Ghế ${ticket.seatNumber}) không? Lưu ý: Hủy từ 3 vé trở lên sẽ bị khóa tài khoản!');">
+                                                        <input type="hidden" name="id" value="${ticket.id}">
+                                                        <input type="hidden" name="tripId" value="${trip.id}">
+                                                        <input type="hidden" name="customerId" value="${ticket.customerId}">
+                                                        <input type="hidden" name="tickets" value="<c:out value='${param.tickets}'/>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-x-circle me-1"></i>Hủy vé
+                                                        </button>
+                                                    </form>
                                                 </c:if>
                                                 <c:if test="${ticket.status == 'Đã hủy'}">
                                                     <span class="text-muted small fst-italic">Đã hủy</span>
@@ -136,19 +177,50 @@
                 </div>
             </div>
 
+            <!-- TÙY CHỌN IN VÉ (IN VÉ CHUNG HOẶC IN RIÊNG TỪNG GHẾ) -->
+            <div class="card shadow-sm border-0 rounded-4 p-3 bg-white mb-4 d-print-none">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">
+                            <i class="bi bi-printer-fill text-primary me-2"></i>Tùy Chọn In Vé
+                        </h6>
+                        <small class="text-muted">Bạn có thể chọn in phiếu tổng hợp (in chung) hoặc in thẻ vé riêng cho từng ghế:</small>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <button type="button" onclick="window.print()" class="btn btn-outline-primary fw-semibold px-3 py-2">
+                            <i class="bi bi-printer me-1"></i> In Vé Chung (Tất Cả Ghế)
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-primary fw-semibold dropdown-toggle px-3 py-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-ticket-perforated-fill me-1"></i> In Vé Riêng Từng Ghế
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                <li><h6 class="dropdown-header">Chọn ghế để mở trang in riêng:</h6></li>
+                                <c:forEach items="${tickets}" var="t">
+                                    <c:if test="${t.status != 'Đã hủy'}">
+                                        <li>
+                                            <a class="dropdown-item py-2 d-flex justify-content-between align-items-center" 
+                                               href="${pageContext.request.contextPath}/print-ticket?id=${t.id}" target="_blank">
+                                                <span><i class="bi bi-person-badge me-2 text-primary"></i>In Ghế <b>${t.seatNumber}</b></span>
+                                                <span class="badge bg-light text-dark border">#VE${t.id}</span>
+                                            </a>
+                                        </li>
+                                    </c:if>
+                                </c:forEach>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- NÚT ĐIỀU HƯỚNG -->
             <div class="d-flex justify-content-between align-items-center d-print-none">
                 <a href="${pageContext.request.contextPath}/home" class="btn btn-outline-secondary px-4 py-2">
                     <i class="bi bi-house me-1"></i>Về Trang Chủ
                 </a>
-                <div class="d-flex gap-2">
-                    <button onclick="window.print()" class="btn btn-outline-primary px-4 py-2">
-                        <i class="bi bi-printer me-1"></i>In Phiếu Vé
-                    </button>
-                    <a href="${pageContext.request.contextPath}/search" class="btn btn-primary px-4 py-2 fw-semibold">
-                        <i class="bi bi-plus-circle me-1"></i>Đặt Thêm Vé
-                    </a>
-                </div>
+                <a href="${pageContext.request.contextPath}/search" class="btn btn-primary px-4 py-2 fw-semibold">
+                    <i class="bi bi-plus-circle me-1"></i>Đặt Thêm Vé
+                </a>
             </div>
 
         </div>

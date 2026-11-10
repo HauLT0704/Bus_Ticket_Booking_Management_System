@@ -47,9 +47,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
+        <c:if test="${param.msg == 'user_locked'}">
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-lock-fill me-2"></i> <strong>Thành công!</strong> Đã khóa tài khoản người dùng liên kết.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
+        <c:if test="${param.msg == 'user_unlocked'}">
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> <strong>Thành công!</strong> Đã kích hoạt / mở khóa tài khoản người dùng.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
         <c:if test="${param.msg == 'invalid_id'}">
             <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-exclamation-circle-fill me-2"></i> <strong>Cảnh báo!</strong> Mã khách hàng trên đường dẫn không hợp lệ!
+                <i class="bi bi-exclamation-circle-fill me-2"></i> <strong>Cảnh báo!</strong> Mã yêu cầu không hợp lệ!
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
@@ -59,11 +71,8 @@
                 <h3 class="fw-bold text-dark mb-1">
                     <i class="bi bi-people-fill text-primary me-2"></i>Quản Lý Khách Hàng
                 </h3>
-                <p class="text-muted mb-0 small">Xem, tìm kiếm và quản lý thông tin khách hàng trong hệ thống</p>
+                <p class="text-muted mb-0 small">Xem, tìm kiếm và quản lý thông tin khách hàng & tài khoản trong hệ thống</p>
             </div>
-            <a href="${pageContext.request.contextPath}/admin/customer?action=add" class="btn btn-primary fw-semibold px-3 py-2 shadow-sm">
-                <i class="bi bi-person-plus-fill me-1"></i> + Thêm Khách Hàng Mới
-            </a>
         </div>
 
         <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
@@ -99,10 +108,11 @@
                         <tr>
                             <th class="py-3 ps-3" style="width: 70px;">ID</th>
                             <th class="py-3">Họ và Tên</th>
+                            <th class="py-3">Tài Khoản (User)</th>
                             <th class="py-3">Số Điện Thoại</th>
                             <th class="py-3">Email</th>
-                            <th class="py-3">CCCD / CMND</th>
-                            <th class="py-3 text-center" style="width: 140px;">Hành Động</th>
+                            <th class="py-3 text-center">Trạng Thái Tài Khoản</th>
+                            <th class="py-3 text-center" style="width: 220px;">Hoạt Động</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -115,17 +125,67 @@
                                             <i class="bi bi-person-circle text-secondary me-1"></i>
                                             ${c.fullName}
                                         </td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${not empty c.username}">
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                                        <i class="bi bi-person-badge me-1"></i>${c.username}
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-muted small fst-italic">Khách vãng lai</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
                                         <td><span class="badge bg-light text-dark border">${c.phone}</span></td>
                                         <td>${c.email != null ? c.email : '-'}</td>
-                                        <td>${c.idCard != null ? c.idCard : '-'}</td>
+                                        <td class="text-center">
+                                            <c:choose>
+                                                <c:when test="${empty c.userId}">
+                                                    <span class="badge bg-secondary-subtle text-secondary border">Chưa có tài khoản</span>
+                                                </c:when>
+                                                <c:when test="${!c.accountOwner}">
+                                                    <span class="badge bg-light text-muted border"><i class="bi bi-person me-1"></i>Hành khách</span>
+                                                </c:when>
+                                                <c:when test="${c.userStatus == 'Bị khóa'}">
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                                        <i class="bi bi-lock-fill me-1"></i>Bị khóa
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                                        <i class="bi bi-check-circle-fill me-1"></i>Hoạt động
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
                                         <td class="text-center text-nowrap">
+                                            <c:if test="${not empty c.userId and c.accountOwner}">
+                                                <c:choose>
+                                                    <c:when test="${c.userStatus == 'Bị khóa'}">
+                                                        <a href="${pageContext.request.contextPath}/admin/customer?action=unlock&userId=${c.userId}" 
+                                                           class="btn btn-sm btn-outline-success me-1" 
+                                                           onclick="return confirm('Kích hoạt / Mở khóa lại tài khoản [${c.username}]?');" 
+                                                           title="Kích hoạt tài khoản">
+                                                            <i class="bi bi-unlock-fill"></i> Kích hoạt
+                                                        </a>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <a href="${pageContext.request.contextPath}/admin/customer?action=lock&userId=${c.userId}" 
+                                                           class="btn btn-sm btn-outline-danger me-1" 
+                                                           onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản [${c.username}]?');" 
+                                                           title="Khóa tài khoản">
+                                                            <i class="bi bi-lock-fill"></i> Khóa
+                                                        </a>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </c:if>
                                             <a href="${pageContext.request.contextPath}/admin/customer?action=edit&id=${c.id}" 
                                                class="btn btn-sm btn-outline-warning me-1" title="Sửa thông tin">
                                                 <i class="bi bi-pencil-square"></i> Sửa
                                             </a>
                                             <a href="${pageContext.request.contextPath}/admin/customer?action=delete&id=${c.id}" 
-                                               class="btn btn-sm btn-outline-danger" 
-                                               onclick="return confirm('Bạn có chắc muốn xóa khách hàng #${c.id} này?');" title="Xóa">
+                                               class="btn btn-sm btn-outline-danger" title="Xóa khách hàng">
                                                 <i class="bi bi-trash3-fill"></i> Xóa
                                             </a>
                                         </td>
@@ -134,7 +194,7 @@
                             </c:when>
                             <c:otherwise>
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
+                                    <td colspan="7" class="text-center py-4 text-muted">
                                         <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
                                         Không tìm thấy khách hàng nào phù hợp!
                                     </td>

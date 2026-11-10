@@ -5,6 +5,43 @@
 
 <div class="container py-4">
 
+    <!-- THÔNG BÁO LỖI HỆ THỐNG NẾU CÓ -->
+    <c:if test="${param.error == 'departed'}">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-clock-history me-2 fs-5 align-middle"></i>
+            <span>Chuyến xe này đã khởi hành so với thời gian thực tế, hệ thống không cho phép đặt vé!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </c:if>
+    <c:if test="${param.error == 'too_close'}">
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-hourglass-bottom me-2 fs-5 align-middle"></i>
+            <span>Chỉ được phép đặt vé trước giờ khởi hành tối thiểu <b>60 phút</b>. Chuyến xe này sắp xuất bến nên cổng đặt vé trực tuyến đã đóng!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </c:if>
+    <c:if test="${param.error == 'cancelled'}">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-x-octagon-fill me-2 fs-5 align-middle"></i>
+            <span>Chuyến xe này đã bị hủy hoặc hoàn thành, không thể đặt vé!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </c:if>
+    <c:if test="${param.error == 'unauthorized'}">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-shield-x me-2 fs-5 align-middle"></i>
+            <span>Bạn không có quyền truy cập hoặc thao tác trên thông tin vé của khách hàng khác!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </c:if>
+    <c:if test="${param.error == 'notfound'}">
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+            <span>Không tìm thấy thông tin chuyến xe hoặc vé xe yêu cầu!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </c:if>
+
     <!-- KHỐI TÌM KIẾM CHUYẾN XE (PHÂN CÔNG TV4) -->
     <div class="card shadow-sm border-0 rounded-4 mb-4"
          style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.88) 0%, rgba(0, 67, 168, 0.92) 100%),
@@ -187,6 +224,14 @@
                                 <!-- Nút chọn chuyến -> Chuyển sang sơ đồ ghế (TV4) -->
                                 <div class="col-md-3 text-end">
                                     <c:choose>
+                                        <c:when test="${trip.isBookable != null && !trip.isBookable}">
+                                            <button class="btn btn-secondary px-4 py-2 fw-semibold w-100 mb-1" disabled title="${trip.unbookableReason}">
+                                                <i class="bi bi-clock-history me-1"></i>${trip.unbookableReason}
+                                            </button>
+                                            <span class="text-danger small d-block text-center">
+                                                <i class="bi bi-exclamation-circle"></i> Đóng trước giờ chạy 60p
+                                            </span>
+                                        </c:when>
                                         <c:when test="${trip.availableSeats > 0}">
                                             <a href="${pageContext.request.contextPath}/booking/seats?tripId=${trip.id}" 
                                                class="btn btn-primary px-4 py-2 fw-semibold shadow-sm w-100 mb-1">
@@ -252,9 +297,18 @@
                                                     <span class="badge bg-secondary-subtle text-dark small ms-auto">
                                                         ${tr.trip1Type} (${tr.trip1Plate}) - Còn ${tr.trip1Seats} chỗ
                                                     </span>
-                                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-primary btn-sm fw-semibold">
-                                                        <i class="bi bi-ticket-perforated me-1"></i>Chọn Ghép Tuyến
-                                                    </a>
+                                                    <c:choose>
+                                                        <c:when test="${tr.isBookable != null && !tr.isBookable}">
+                                                            <button class="btn btn-secondary btn-sm fw-semibold" disabled title="${tr.unbookableReason}">
+                                                                <i class="bi bi-clock-history me-1"></i>${tr.unbookableReason}
+                                                            </button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-primary btn-sm fw-semibold">
+                                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Ghép Tuyến
+                                                            </a>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                             </c:when>
                                             <c:otherwise>
@@ -271,9 +325,18 @@
                                                     <span class="badge bg-secondary-subtle text-dark small ms-auto">
                                                         ${tr.trip1Type} (${tr.trip1Plate})
                                                     </span>
-                                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-outline-primary btn-sm fw-semibold">
-                                                        <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 1
-                                                    </a>
+                                                    <c:choose>
+                                                        <c:when test="${tr.trip1Bookable != null && !tr.trip1Bookable}">
+                                                            <button class="btn btn-secondary btn-sm fw-semibold" disabled title="${tr.trip1Reason}">
+                                                                <i class="bi bi-clock-history me-1"></i>${tr.trip1Reason}
+                                                            </button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip1Id}" class="btn btn-outline-primary btn-sm fw-semibold">
+                                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 1
+                                                            </a>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
 
                                                 <!-- Chặng 2 -->
@@ -289,9 +352,18 @@
                                                     <span class="badge bg-secondary-subtle text-dark small ms-auto">
                                                         ${tr.trip2Type} (${tr.trip2Plate})
                                                     </span>
-                                                    <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip2Id}" class="btn btn-outline-success btn-sm fw-semibold">
-                                                        <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 2
-                                                    </a>
+                                                    <c:choose>
+                                                        <c:when test="${tr.trip2Bookable != null && !tr.trip2Bookable}">
+                                                            <button class="btn btn-secondary btn-sm fw-semibold" disabled title="${tr.trip2Reason}">
+                                                                <i class="bi bi-clock-history me-1"></i>${tr.trip2Reason}
+                                                            </button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <a href="${pageContext.request.contextPath}/booking/seats?tripId=${tr.trip2Id}" class="btn btn-outline-success btn-sm fw-semibold">
+                                                                <i class="bi bi-ticket-perforated me-1"></i>Chọn Chặng 2
+                                                            </a>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                             </c:otherwise>
                                         </c:choose>

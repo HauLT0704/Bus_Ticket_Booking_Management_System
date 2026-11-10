@@ -13,6 +13,7 @@ import model.Location;
 import model.Route;
 import model.User;
 import util.PaginationUtil;
+import util.RouteDistanceHelper;
 
 /**
  * Controller Quản lý Tuyến đường (kèm phân trang)
@@ -86,12 +87,11 @@ public class RouteController extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/admin/route?msg=not_found");
                     return;
                 }
-                boolean deleted = routeDAO.delete(id);
-                if (deleted) {
-                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=deleted");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=delete_error");
-                }
+                List<Location> locationList = routeDAO.getAllLocations();
+                request.setAttribute("route", route);
+                request.setAttribute("locationList", locationList);
+                request.setAttribute("isDelete", true);
+                request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
             } catch (NumberFormatException e) {
                 response.sendRedirect(request.getContextPath() + "/admin/route?msg=invalid_id");
             }
@@ -118,6 +118,27 @@ public class RouteController extends HttpServlet {
 
         String action = request.getParameter("action");
 
+        // Xử lý XÓA tuyến đường qua POST
+        if ("delete".equals(action)) {
+            try {
+                int id = Integer.parseInt(request.getParameter("id"));
+                Route route = routeDAO.getById(id);
+                if (route == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=not_found");
+                    return;
+                }
+                boolean deleted = routeDAO.delete(id);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/route?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/route?msg=invalid_id");
+            }
+            return;
+        }
+
         int fromLocationId = 0;
         int toLocationId = 0;
         double distance = 0;
@@ -127,44 +148,66 @@ public class RouteController extends HttpServlet {
         try {
             fromLocationId = Integer.parseInt(request.getParameter("fromLocationId"));
             toLocationId = Integer.parseInt(request.getParameter("toLocationId"));
-            distance = Double.parseDouble(request.getParameter("distance"));
-            duration = Integer.parseInt(request.getParameter("duration"));
+            if (request.getParameter("distance") != null && !request.getParameter("distance").trim().isEmpty()) {
+                distance = Double.parseDouble(request.getParameter("distance").trim());
+            }
+            if (request.getParameter("duration") != null && !request.getParameter("duration").trim().isEmpty()) {
+                duration = Integer.parseInt(request.getParameter("duration").trim());
+            }
             if (request.getParameter("id") != null && !request.getParameter("id").isEmpty()) {
                 currentId = Integer.parseInt(request.getParameter("id"));
             }
         } catch (NumberFormatException e) {
             distance = -1;
+            duration = -1;
         }
-        
-        if (distance <= 0 || distance > 1000 || duration <= 0 || duration > 1000 || fromLocationId <= 0 || toLocationId <= 0 || fromLocationId == toLocationId) {
-            List<Location> locationList = routeDAO.getAllLocations();
+
+        List<Location> locationList = routeDAO.getAllLocations();
+        String fromName = "";
+        String toName = "";
+        for (Location loc : locationList) {
+            if (loc.getId() == fromLocationId) fromName = loc.getName();
+            if (loc.getId() == toLocationId) toName = loc.getName();
+        }
+
+        // Tự động lấy khoảng cách & thời gian chuẩn nếu để trống
+        if (fromLocationId > 0 && toLocationId > 0 && fromLocationId != toLocationId) {
+            RouteDistanceHelper.RouteInfo stdInfo = RouteDistanceHelper.getStandardRoute(fromLocationId, toLocationId, fromName, toName);
+            if (stdInfo != null) {
+                if (distance <= 0) distance = stdInfo.getDistance();
+                if (duration <= 0) duration = stdInfo.getDuration();
+            }
+        }
+
+        // Kiểm tra ràng buộc logic
+        String validationError = RouteDistanceHelper.validateRoute(distance, duration, fromLocationId, toLocationId, fromName, toName);
+        if (validationError != null) {
             request.setAttribute("locationList", locationList);
 
             Route route = new Route();
             route.setId(currentId);
-            route.setDistance(distance);
-            route.setDuration(duration);
-            Location fromLoc = new Location(); fromLoc.setId(fromLocationId);
-            Location toLoc = new Location(); toLoc.setId(toLocationId);
+            route.setDistance(distance > 0 ? distance : 0);
+            route.setDuration(duration > 0 ? duration : 0);
+            Location fromLoc = new Location(fromLocationId, fromName);
+            Location toLoc = new Location(toLocationId, toName);
             route.setFromLocation(fromLoc);
             route.setToLocation(toLoc);
 
             request.setAttribute("route", route);
-            request.setAttribute("errorMsg", "Vui lòng chọn điểm đi khác điểm đến, quãng đường & thời gian dự kiến nằm trong khoảng từ 1 đến 1000!");
+            request.setAttribute("errorMsg", validationError);
             request.getRequestDispatcher("/WEB-INF/admin/route-form.jsp").forward(request, response);
             return;
         }
 
         if (routeDAO.existsByLocations(fromLocationId, toLocationId, currentId)) {
-            List<Location> locationList = routeDAO.getAllLocations();
             request.setAttribute("locationList", locationList);
 
             Route route = new Route();
             route.setId(currentId);
             route.setDistance(distance);
             route.setDuration(duration);
-            Location fromLoc = new Location(); fromLoc.setId(fromLocationId);
-            Location toLoc = new Location(); toLoc.setId(toLocationId);
+            Location fromLoc = new Location(fromLocationId, fromName);
+            Location toLoc = new Location(toLocationId, toName);
             route.setFromLocation(fromLoc);
             route.setToLocation(toLoc);
 

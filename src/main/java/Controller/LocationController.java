@@ -79,12 +79,9 @@ public class LocationController extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/admin/location?msg=not_found");
                     return;
                 }
-                boolean deleted = locationDAO.delete(id);
-                if (deleted) {
-                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=delete_error");
-                }
+                request.setAttribute("location", loc);
+                request.setAttribute("isDelete", true);
+                request.getRequestDispatcher("/WEB-INF/admin/location-form.jsp").forward(request, response);
             } catch (NumberFormatException e) {
                 response.sendRedirect(request.getContextPath() + "/admin/location?msg=invalid_id");
             }
@@ -110,6 +107,28 @@ public class LocationController extends HttpServlet {
 
         LocationDAO locationDAO = new LocationDAO();
         String action = request.getParameter("action");
+
+        // Xử lý XÓA địa điểm qua POST
+        if ("delete".equals(action)) {
+            try {
+                int idToDelete = Integer.parseInt(request.getParameter("id"));
+                Location loc = locationDAO.getById(idToDelete);
+                if (loc == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=not_found");
+                    return;
+                }
+                boolean deleted = locationDAO.delete(idToDelete);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/location?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/location?msg=invalid_id");
+            }
+            return;
+        }
+
         String name = request.getParameter("name");
         
         int id = 0;

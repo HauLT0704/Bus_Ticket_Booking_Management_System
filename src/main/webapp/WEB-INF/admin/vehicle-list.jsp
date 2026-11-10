@@ -59,7 +59,7 @@
                     <h3 class="fw-bold text-dark mb-1">
                         <i class="bi bi-truck-front-fill text-primary me-2"></i>Quản Lý Xe Khách
                     </h3>
-                    <p class="text-muted mb-0 small">Quản lý phương tiện, loại xe, số lượng ghế ngồi và trạng thái vận hành</p>
+                    <p class="text-muted mb-0 small">Quản lý phương tiện, loại xe và số lượng ghế ngồi</p>
                 </div>
                 <a href="${pageContext.request.contextPath}/admin/vehicle?action=add" class="btn btn-primary fw-semibold px-3 py-2 shadow-sm">
                     <i class="bi bi-plus-circle me-1"></i> + Thêm Xe Khách Mới
@@ -75,7 +75,6 @@
                                 <th class="py-3">Biển Số Xe</th>
                                 <th class="py-3 text-center">Tổng Số Ghế</th>
                                 <th class="py-3">Loại Xe</th>
-                                <th class="py-3 text-center">Trạng Thái</th>
                                 <th class="py-3 text-center" style="width: 140px;">Hành Động</th>
                             </tr>
                         </thead>
@@ -94,19 +93,13 @@
                                                     ${v.type}
                                                 </span>
                                             </td>
-                                            <td class="text-center">
-                                                <span class="badge ${v.status == 'Hoạt động' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning border border-warning-subtle'} rounded-pill px-3 py-1">
-                                                    ${v.status}
-                                                </span>
-                                            </td>
                                             <td class="text-center text-nowrap">
                                                 <a href="${pageContext.request.contextPath}/admin/vehicle?action=edit&id=${v.id}" 
                                                    class="btn btn-sm btn-outline-warning me-1" title="Sửa xe">
                                                     <i class="bi bi-pencil-square"></i> Sửa
                                                 </a>
                                                 <a href="${pageContext.request.contextPath}/admin/vehicle?action=delete&id=${v.id}" 
-                                                   class="btn btn-sm btn-outline-danger" 
-                                                   onclick="return confirm('Bạn có chắc muốn xóa xe ${v.licensePlate}?');" title="Xóa xe">
+                                                   class="btn btn-sm btn-outline-danger" title="Xóa xe">
                                                     <i class="bi bi-trash3-fill"></i> Xóa
                                                 </a>
                                             </td>
@@ -115,7 +108,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">
+                                        <td colspan="5" class="text-center py-4 text-muted">
                                             <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
                                             Chưa có xe khách nào trong hệ thống!
                                         </td>

@@ -33,10 +33,13 @@
                     <h3 class="fw-bold mb-1">
                         ${trip.fromLocationName} <i class="bi bi-arrow-right mx-2"></i> ${trip.toLocationName}
                     </h3>
-                    <p class="mb-0 text-white-50">
+                    <p class="mb-1 text-white-50">
                         <i class="bi bi-clock-fill me-1"></i>Khởi hành: 
                         <b><fmt:formatDate value="${trip.departureTime}" pattern="HH:mm - dd/MM/yyyy" /></b>
                     </p>
+                    <span class="badge bg-light text-primary small">
+                        <i class="bi bi-info-circle me-1"></i>Chỉ nhận đặt vé trước giờ khởi hành tối thiểu 60 phút
+                    </span>
                 </div>
                 <div class="col-md-5 text-md-end mt-3 mt-md-0">
                     <div class="text-white-50 small">Giá vé mỗi ghế:</div>
@@ -177,7 +180,7 @@
 
         <!-- CỘT BÊN PHẢI: FORM NHẬP THÔNG TIN KHÁCH HÀNG (TV4) -->
         <div class="col-lg-5">
-            <div class="card shadow-sm border-0 rounded-4 p-4 bg-white sticky-top" style="top: 20px;">
+            <div class="card shadow-sm border-0 rounded-4 p-4 bg-white sticky-top" style="top: 85px; z-index: 10;">
                 <h5 class="fw-bold text-dark mb-3">
                     <i class="bi bi-person-lines-fill text-primary me-2"></i>Thông Tin Đặt Vé
                 </h5>
@@ -193,7 +196,7 @@
                             <span id="selectedSeatsText" class="fw-bold text-primary">Chưa chọn ghế</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span class="text-muted small">Số lượng vé:</span>
+                            <span class="text-muted small">Số lượng vé (Tối đa 5 vé):</span>
                             <span id="seatCountText" class="fw-bold">0 vé</span>
                         </div>
                         <hr class="my-2">
@@ -239,7 +242,7 @@
 
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted mb-1">
-                            Số CMND / Căn cước (CCCD)
+                            Số CMND / Căn cước (CCCD) <span class="fw-normal text-secondary">(Không bắt buộc)</span>
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-card-text"></i></span>
@@ -279,6 +282,10 @@
             element.classList.remove('btn-primary');
             element.classList.add('btn-outline-secondary');
         } else {
+            if (selectedSeats.size >= 5) {
+                alert('Mỗi lần đặt vé chỉ được chọn tối đa 5 ghế!');
+                return;
+            }
             selectedSeats.add(seatCode);
             element.classList.remove('btn-outline-secondary');
             element.classList.add('btn-primary');

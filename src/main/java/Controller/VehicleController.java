@@ -73,12 +73,9 @@ public class VehicleController extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=not_found");
                         return;
                     }
-                    boolean deleted = vehicleDAO.deleteVehicle(idToDelete);
-                    if (deleted) {
-                        response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=deleted");
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=delete_error");
-                    }
+                    request.setAttribute("vehicle", existingVehicle);
+                    request.setAttribute("isDelete", true);
+                    request.getRequestDispatcher("/WEB-INF/admin/vehicle-form.jsp").forward(request, response);
                 } catch (NumberFormatException e) {
                     response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=invalid_id");
                 }
@@ -109,10 +106,35 @@ public class VehicleController extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+
+        // Xử lý XÓA xe khách qua POST
+        if ("delete".equals(action)) {
+            try {
+                int idToDelete = Integer.parseInt(request.getParameter("id"));
+                Vehicle existingVehicle = vehicleDAO.getVehicleById(idToDelete);
+                if (existingVehicle == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=not_found");
+                    return;
+                }
+                boolean deleted = vehicleDAO.deleteVehicle(idToDelete);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/vehicle?msg=invalid_id");
+            }
+            return;
+        }
+
         String licensePlate = request.getParameter("licensePlate");
         String totalSeatsStr = request.getParameter("totalSeats");
         String type = request.getParameter("type");
         String status = request.getParameter("status");
+        if (status == null || status.trim().isEmpty()) {
+            status = "Hoạt động";
+        }
 
         int id = 0;
         String idParam = request.getParameter("id");
@@ -141,6 +163,19 @@ public class VehicleController extends HttpServlet {
         }
 
         String cleanPlate = licensePlate.trim().toUpperCase();
+
+        // Kiểm tra định dạng biển số xe bằng Regex chuẩn (Ví dụ: 65B-123.45 hoặc 65B-12345)
+        String plateRegex = "^[0-9]{2}[A-Z]-([0-9]{3}\\.[0-9]{2}|[0-9]{4,5})$";
+        if (!cleanPlate.matches(plateRegex)) {
+            Vehicle v = new Vehicle(id, cleanPlate, totalSeats, type, status);
+            if (id > 0) {
+                request.setAttribute("vehicle", v);
+            }
+            request.setAttribute("errorMsg", "Biển số xe không đúng định dạng! Ví dụ hợp lệ: 65B-123.45 hoặc 65B-12345 (2 chữ số tỉnh + 1 chữ cái + dấu gạch nối + các chữ số xe).");
+            request.getRequestDispatcher("/WEB-INF/admin/vehicle-form.jsp").forward(request, response);
+            return;
+        }
+
         if (totalSeats < 10 || totalSeats > 60) {
             Vehicle v = new Vehicle(id, cleanPlate, totalSeats, type, status);
             if (id > 0) {

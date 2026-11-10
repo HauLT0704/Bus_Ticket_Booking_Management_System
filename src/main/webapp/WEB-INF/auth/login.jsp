@@ -53,8 +53,22 @@
             </div>
             <% }%>
 
+            <% if ("require_login".equals(request.getParameter("msg"))) { %>
+            <div class="alert alert-warning py-2 px-3 small border-0 rounded-3 mb-3 d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-6"></i>
+                <span>Vui lòng đăng nhập tài khoản trước khi chọn ghế và đặt vé xe!</span>
+            </div>
+            <% } %>
+
             <!-- FORM NHẬP LIỆU -->
             <form action="${pageContext.request.contextPath}/login" method="POST">
+                <c:set var="redirectTarget" value="${param.redirect}" />
+                <c:if test="${empty redirectTarget and not empty redirect}">
+                    <c:set var="redirectTarget" value="${redirect}" />
+                </c:if>
+                <c:if test="${not empty redirectTarget}">
+                    <input type="hidden" name="redirect" value="<c:out value='${redirectTarget}'/>">
+                </c:if>
                 <div class="mb-3">
                     <label for="username" class="form-label small fw-semibold text-secondary">Tên đăng nhập</label>
                     <input type="text" id="username" name="username" class="form-control py-2 rounded-3" 

@@ -95,8 +95,7 @@
                                             <i class="bi bi-pencil-square"></i> Sửa
                                         </a>
                                         <a href="${pageContext.request.contextPath}/admin/location?action=delete&id=${loc.id}" 
-                                           class="btn btn-sm btn-outline-danger" 
-                                           onclick="return confirm('Bạn có chắc muốn xóa địa điểm ${loc.name}?');" title="Xóa">
+                                           class="btn btn-sm btn-outline-danger" title="Xóa">
                                             <i class="bi bi-trash3-fill"></i> Xóa
                                         </a>
                                     </td>

@@ -25,44 +25,48 @@
             </div>
 
             <!-- THÔNG BÁO LỖI -->
-            <% if (request.getAttribute("errorMessage") != null) {%>
-            <div class="alert alert-danger py-2 px-3 small border-0 rounded-3 mb-3 d-flex align-items-center">
-                <i class="bi bi-exclamation-circle-fill me-2 fs-6"></i>
-                <span><%= request.getAttribute("errorMessage")%></span>
-            </div>
-            <% }%>
+            <c:if test="${not empty errorMessage}">
+                <div class="alert alert-danger py-2 px-3 small border-0 rounded-3 mb-3 d-flex align-items-center">
+                    <i class="bi bi-exclamation-circle-fill me-2 fs-6"></i>
+                    <span><c:out value="${errorMessage}"/></span>
+                </div>
+            </c:if>
 
             <!-- FORM NHẬP LIỆU -->
             <form action="${pageContext.request.contextPath}/register" method="POST">
                 <div class="mb-3">
                     <label class="form-label small fw-semibold text-secondary">Tên đăng nhập <span class="text-danger">*</span></label>
-                    <input type="text" name="username" class="form-control py-2 rounded-3" placeholder="Ví dụ: nguyenvana" required autofocus>
+                    <input type="text" name="username" class="form-control py-2 rounded-3" placeholder="Ví dụ: nguyenvana" 
+                           value="<c:out value='${username}'/>" required autofocus>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label small fw-semibold text-secondary">Họ và tên <span class="text-danger">*</span></label>
-                    <input type="text" name="fullName" class="form-control py-2 rounded-3" placeholder="Ví dụ: Nguyễn Văn A" required> 
+                    <input type="text" name="fullName" class="form-control py-2 rounded-3" placeholder="Ví dụ: Nguyễn Văn A" 
+                           value="<c:out value='${fullName}'/>" required> 
                 </div>
 
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label small fw-semibold text-secondary">Số điện thoại <span class="text-danger">*</span></label>
-                        <input type="tel" name="phone" class="form-control py-2 rounded-3" placeholder="0901234567" required> 
+                        <label class="form-label small fw-semibold text-secondary">Số điện thoại (10 số) <span class="text-danger">*</span></label>
+                        <input type="tel" name="phone" class="form-control py-2 rounded-3" placeholder="0901234567" 
+                               value="<c:out value='${phone}'/>" pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số, bắt đầu bằng số 0" required> 
                     </div>
                     <div class="col-6">
-                        <label class="form-label small fw-semibold text-secondary">Email</label>
-                        <input type="email" name="email" class="form-control py-2 rounded-3" placeholder="a@gmail.com"> 
+                        <label class="form-label small fw-semibold text-secondary">Email (@gmail.com) <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control py-2 rounded-3" placeholder="vidu@gmail.com" 
+                               value="<c:out value='${email}'/>" pattern=".+@gmail\.com" title="Email phải có đuôi @gmail.com" required> 
                     </div>
                 </div>
 
                 <div class="row g-2 mb-4">
                     <div class="col-6">
                         <label class="form-label small fw-semibold text-secondary">Mật khẩu <span class="text-danger">*</span></label>
-                        <input type="password" name="password" class="form-control py-2 rounded-3" placeholder="Tối thiểu 6 ký tự" required> 
+                        <input type="password" name="password" class="form-control py-2 rounded-3" placeholder="Tối thiểu 6 ký tự" minlength="6" required> 
                     </div>
                     <div class="col-6">
                         <label class="form-label small fw-semibold text-secondary">Xác nhận MK <span class="text-danger">*</span></label>
-                        <input type="password" name="confirmPassword" class="form-control py-2 rounded-3" placeholder="Nhập lại MK" required> 
+                        <input type="password" name="confirmPassword" class="form-control py-2 rounded-3" placeholder="Nhập lại MK" minlength="6" required> 
                     </div>
                 </div>
 

@@ -20,7 +20,7 @@
     <c:set var="navThemeClass" value="bg-dark" />
 </c:if>
 
-<nav class="navbar navbar-expand-lg navbar-dark ${navThemeClass} shadow-sm py-2 sticky-top d-print-none">
+<nav class="navbar navbar-expand-lg navbar-dark ${navThemeClass} shadow-sm py-2 sticky-top d-print-none" style="z-index: 1030;">
     <div class="container-fluid px-lg-4">
 
         <!-- LOGO THƯƠNG HIỆU -->
@@ -64,6 +64,14 @@
                                href="${pageContext.request.contextPath}/admin/trip">
                                 <i class="bi bi-calendar-check me-1"></i>
                                 Chuyến xe
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link px-3 rounded-3 <c:if test='${pageContext.request.requestURI.contains("/ticket")}'>active fw-semibold bg-white bg-opacity-10</c:if>"
+                               href="${pageContext.request.contextPath}/admin/tickets">
+                                <i class="bi bi-ticket-perforated me-1"></i>
+                                Quản lý vé
                             </a>
                         </li>
 

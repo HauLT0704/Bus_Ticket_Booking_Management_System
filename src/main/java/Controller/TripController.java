@@ -94,12 +94,14 @@ public class TripController extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/admin/trip?msg=not_found");
                     return;
                 }
-                boolean deleted = tripDAO.delete(id);
-                if (deleted) {
-                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=deleted");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=delete_error");
-                }
+                List<Route> routeList = tripDAO.getAllRoutes();
+                List<Vehicle> vehicleList = tripDAO.getAllVehicles();
+                
+                request.setAttribute("trip", trip);
+                request.setAttribute("routeList", routeList);
+                request.setAttribute("vehicleList", vehicleList);
+                request.setAttribute("isDelete", true);
+                request.getRequestDispatcher("/WEB-INF/admin/trip-form.jsp").forward(request, response);
             } catch (NumberFormatException e) {
                 response.sendRedirect(request.getContextPath() + "/admin/trip?msg=invalid_id");
             }
@@ -125,6 +127,28 @@ public class TripController extends HttpServlet {
         TripDAO tripDAO = new TripDAO();
         
         String action = request.getParameter("action");
+
+        // Xử lý XÓA chuyến xe qua POST
+        if ("delete".equals(action)) {
+            try {
+                int idToDelete = Integer.parseInt(request.getParameter("id"));
+                Trip trip = tripDAO.getById(idToDelete);
+                if (trip == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=not_found");
+                    return;
+                }
+                boolean deleted = tripDAO.delete(idToDelete);
+                if (deleted) {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/admin/trip?msg=delete_error");
+                }
+            } catch (NumberFormatException e) {
+                response.sendRedirect(request.getContextPath() + "/admin/trip?msg=invalid_id");
+            }
+            return;
+        }
+
         int routeId = 0;
         int vehicleId = 0;
         int availableSeats = -1;
@@ -199,6 +223,9 @@ public class TripController extends HttpServlet {
         } else if (!arrivalTime.after(departureTime)) {
             isInvalid = true;
             errorMessage = "Thời gian đến dự kiến phải sau thời gian khởi hành!";
+        } else if (tripDAO.isVehicleScheduleConflict(vehicleId, departureTime, arrivalTime, currentId)) {
+            isInvalid = true;
+            errorMessage = "Xe khách này đã có lịch chạy trùng khoảng thời gian (từ khởi hành đến tới nơi) với một chuyến xe khác! Vui lòng chọn xe khác hoặc đổi khung giờ.";
         } else if (availableSeats < 0 || availableSeats > maxVehicleSeats) {
             isInvalid = true;
             errorMessage = "Số ghế trống phải từ 0 đến tối đa " + maxVehicleSeats + " ghế (theo sức chứa của xe đã chọn)!";

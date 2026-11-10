@@ -1,9 +1,15 @@
-
 package Controller;
 
 import dao.BookingDAO;
+import dao.CustomerDAO;
+import dao.LocationDAO;
+import dao.TripDAO;
+import dao.UserDAO;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.servlet.ServletException;
@@ -11,7 +17,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import model.Location;
 import model.Ticket;
+import model.Trip;
+import model.User;
+import util.PaginationUtil;
 
 /**
  * Controller xử lý Tìm chuyến xe, Sơ đồ ghế và Đặt vé
@@ -40,7 +51,6 @@ public class BookingController extends HttpServlet {
         } else if ("/search".equals(path)) {
             handleSearchTrips(request, response);
         } else {
-            // /booking (Xem thông tin vé vừa đặt hoặc hủy vé)
             String action = request.getParameter("action");
             if ("success".equals(action)) {
                 handleBookingSuccess(request, response);
@@ -75,24 +85,12 @@ public class BookingController extends HttpServlet {
         String from = request.getParameter("from");
         String to = request.getParameter("to");
         String date = request.getParameter("date");
-        String guestsStr = request.getParameter("guests");
+        int guests = Math.max(1, parseInt(request.getParameter("guests"), 1));
 
-        int guests = 1;
-        if (guestsStr != null && !guestsStr.trim().isEmpty()) {
-            try {
-                guests = Integer.parseInt(guestsStr.trim());
-                if (guests < 1)
-                    guests = 1;
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
-        // Lấy danh sách địa điểm phục vụ dropdown
-        dao.LocationDAO locationDAO = new dao.LocationDAO();
-        List<model.Location> locationList = locationDAO.getAll();
+        LocationDAO locationDAO = new LocationDAO();
+        List<Location> locationList = locationDAO.getAll();
         request.setAttribute("locationList", locationList);
 
-        // Chuẩn hóa tên địa điểm và xác định Location ID (hỗ trợ cả ID hoặc tên rút gọn như TP.HCM từ home.jsp)
         String searchFrom = normalizeLocation(from, locationList);
         String searchTo = normalizeLocation(to, locationList);
         int fromId = findLocationId(searchFrom, locationList);
@@ -100,52 +98,14 @@ public class BookingController extends HttpServlet {
 
         List<Map<String, Object>> trips = new ArrayList<>();
 
-        // 1. Gọi TripDAO.searchTrips() do TV2 viết theo đúng phân công chi tiết
+        // 1. Gọi TripDAO.searchTrips() của TV2
         if (fromId > 0 && toId > 0 && date != null && !date.trim().isEmpty()) {
             try {
-                dao.TripDAO tripDAO = new dao.TripDAO();
-                List<model.Trip> tv2Trips = tripDAO.searchTrips(fromId, toId, date.trim(), guests);
-                if (tv2Trips != null && !tv2Trips.isEmpty()) {
-                    for (model.Trip t : tv2Trips) {
-                        Map<String, Object> map = new java.util.HashMap<>();
-                        map.put("id", t.getId());
-                        map.put("price", t.getPrice());
-                        map.put("departureTime", t.getDepartureTime());
-                        map.put("arrivalTime", t.getArrivalTime());
-                        map.put("availableSeats", t.getAvailableSeats());
-
-                        if (t.getRoute() != null && t.getRoute().getFromLocation() != null) {
-                            map.put("fromLocationName", t.getRoute().getFromLocation().getName());
-                        } else {
-                            map.put("fromLocationName", searchFrom);
-                        }
-
-                        if (t.getRoute() != null && t.getRoute().getToLocation() != null) {
-                            map.put("toLocationName", t.getRoute().getToLocation().getName());
-                        } else {
-                            map.put("toLocationName", searchTo);
-                        }
-
-                        if (t.getVehicle() != null && t.getVehicle().getLicensePlate() != null) {
-                            map.put("vehiclePlate", t.getVehicle().getLicensePlate());
-                        } else {
-                            map.put("vehiclePlate", "");
-                        }
-
-                        if (t.getVehicle() != null && t.getVehicle().getType() != null) {
-                            map.put("vehicleType", t.getVehicle().getType());
-                        } else {
-                            map.put("vehicleType", "Chất lượng cao");
-                        }
-
-                        if (t.getRoute() != null) {
-                            map.put("duration", t.getRoute().getDuration());
-                            map.put("distance", t.getRoute().getDistance());
-                        } else {
-                            map.put("duration", 180);
-                            map.put("distance", 150);
-                        }
-                        trips.add(map);
+                TripDAO tripDAO = new TripDAO();
+                List<Trip> tv2Trips = tripDAO.searchTrips(fromId, toId, date.trim(), guests);
+                if (tv2Trips != null) {
+                    for (Trip t : tv2Trips) {
+                        trips.add(toTripMap(t, searchFrom, searchTo));
                     }
                 }
             } catch (Exception e) {
@@ -153,54 +113,64 @@ public class BookingController extends HttpServlet {
             }
         }
 
-        // 2. Nếu hàm của TV2 không có kết quả (hoặc tìm kiếm linh hoạt không chọn ngày)
-        // thì tìm kiếm linh hoạt qua BookingDAO để đảm bảo hệ thống luôn tìm thấy chuyến xe chính xác
+        // 2. Tìm kiếm linh hoạt qua BookingDAO nếu TV2 không có kết quả
         if (trips.isEmpty()) {
             trips = bookingDAO.searchTrips(searchFrom, searchTo, date, guests);
         }
 
-        // Tích hợp phân trang cho danh sách chuyến xe của User (Phối hợp TV5)
-        int page = 1;
-        String pageParam = request.getParameter("page");
-        if (pageParam != null) {
-            try {
-                page = Integer.parseInt(pageParam);
-            } catch (NumberFormatException ignored) {
+        // Đánh dấu trạng thái có được phép đặt vé hay không và ẨN các chuyến đã khởi hành
+        long now = System.currentTimeMillis();
+        List<Map<String, Object>> activeTrips = new ArrayList<>();
+        for (Map<String, Object> t : trips) {
+            Object depObj = t.get("departureTime");
+            if (depObj instanceof Date && ((Date) depObj).getTime() <= now) {
+                continue; // Ẩn những chuyến đã khởi hành theo yêu cầu
             }
+            markBookableStatus(t, "departureTime", "isBookable", "unbookableReason", now);
+            activeTrips.add(t);
         }
-        util.PaginationUtil<Map<String, Object>> pagination = util.PaginationUtil.paginate(trips, page, 6);
+        trips = activeTrips;
+
+        // Phân trang danh sách chuyến xe (TV5)
+        int page = parseInt(request.getParameter("page"), 1);
+        PaginationUtil<Map<String, Object>> pagination = PaginationUtil.paginate(trips, page, 6);
         request.setAttribute("pagination", pagination);
         request.setAttribute("trips", pagination.getPageItems());
 
         StringBuilder baseUrl = new StringBuilder(request.getContextPath() + "/search?guests=" + guests);
         if (searchFrom != null && !searchFrom.isEmpty()) {
-            baseUrl.append("&from=").append(java.net.URLEncoder.encode(searchFrom, "UTF-8"));
+            baseUrl.append("&from=").append(URLEncoder.encode(searchFrom, "UTF-8"));
         }
         if (searchTo != null && !searchTo.isEmpty()) {
-            baseUrl.append("&to=").append(java.net.URLEncoder.encode(searchTo, "UTF-8"));
+            baseUrl.append("&to=").append(URLEncoder.encode(searchTo, "UTF-8"));
         }
         if (date != null && !date.trim().isEmpty()) {
-            baseUrl.append("&date=").append(java.net.URLEncoder.encode(date.trim(), "UTF-8"));
+            baseUrl.append("&date=").append(URLEncoder.encode(date.trim(), "UTF-8"));
         }
         request.setAttribute("baseUrl", baseUrl.toString());
 
         // 3. Gợi ý ghép chuyến (TV4 tích hợp khi không có chuyến đi thẳng hoặc hết ghế)
         if (trips.isEmpty() && searchFrom != null && !searchFrom.trim().isEmpty() && searchTo != null && !searchTo.trim().isEmpty()) {
             List<Map<String, Object>> transferTrips = bookingDAO.searchTransferTrips(searchFrom, searchTo, date, guests);
-            request.setAttribute("transferTrips", transferTrips);
+            List<Map<String, Object>> activeTransfers = new ArrayList<>();
+            if (transferTrips != null) {
+                for (Map<String, Object> tr : transferTrips) {
+                    Object dep1 = tr.get("trip1Dep");
+                    if (dep1 instanceof Date && ((Date) dep1).getTime() <= now) {
+                        continue; // Ẩn chuyến ghép đã khởi hành
+                    }
+                    markBookableStatus(tr, "trip1Dep", "trip1Bookable", "trip1Reason", now);
+                    markBookableStatus(tr, "trip2Dep", "trip2Bookable", "trip2Reason", now);
+                    tr.put("isBookable", tr.get("trip1Bookable"));
+                    tr.put("unbookableReason", tr.get("trip1Reason"));
+                    activeTransfers.add(tr);
+                }
+            }
+            request.setAttribute("transferTrips", activeTransfers);
         }
 
-        if (searchFrom != null) {
-            request.setAttribute("selectedFrom", searchFrom);
-        } else {
-            request.setAttribute("selectedFrom", from);
-        }
-
-        if (searchTo != null) {
-            request.setAttribute("selectedTo", searchTo);
-        } else {
-            request.setAttribute("selectedTo", to);
-        }
+        request.setAttribute("selectedFrom", searchFrom != null ? searchFrom : from);
+        request.setAttribute("selectedTo", searchTo != null ? searchTo : to);
         request.setAttribute("selectedDate", date);
         request.setAttribute("selectedGuests", guests);
 
@@ -208,80 +178,29 @@ public class BookingController extends HttpServlet {
     }
 
     /**
-     * Chuẩn hóa chuỗi địa điểm tìm kiếm
-     */
-    private String normalizeLocation(String loc, List<model.Location> list) {
-        if (loc == null || loc.trim().isEmpty() || "Tất cả".equalsIgnoreCase(loc.trim())) {
-            return null;
-        }
-        String trimmed = loc.trim();
-        // Nếu truyền ID (như từ home.jsp truyền vào)
-        try {
-            int id = Integer.parseInt(trimmed);
-            if (list != null) {
-                for (model.Location l : list) {
-                    if (l.getId() == id) {
-                        return l.getName();
-                    }
-                }
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        if ("TP.HCM".equalsIgnoreCase(trimmed) || "TPHCM".equalsIgnoreCase(trimmed) || "Sài Gòn".equalsIgnoreCase(trimmed)) {
-            return "TP. Hồ Chí Minh";
-        }
-        return trimmed;
-    }
-
-    /**
-     * Tìm Location ID từ tên địa điểm phục vụ gọi hàm TripDAO của TV2
-     */
-    private int findLocationId(String locName, List<model.Location> list) {
-        if (locName == null || locName.trim().isEmpty() || list == null) {
-            return 0;
-        }
-        for (model.Location l : list) {
-            if (l.getName().equalsIgnoreCase(locName.trim())
-                    || l.getName().contains(locName.trim())
-                    || locName.trim().contains(l.getName())) {
-                return l.getId();
-            }
-        }
-        return 0;
-    }
-
-    /**
      * 2. Xử lý hiển thị sơ đồ ghế (seat-map.jsp - TV4)
      */
     private void handleSeatMap(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String tripIdStr = request.getParameter("tripId");
-        if (tripIdStr == null || tripIdStr.trim().isEmpty()) {
+        int tripId = parseInt(request.getParameter("tripId"), 0);
+        if (tripId <= 0) {
             response.sendRedirect(request.getContextPath() + "/search");
             return;
         }
 
-        int tripId;
-        try {
-            tripId = Integer.parseInt(tripIdStr.trim());
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/search");
-            return;
-        }
+        User currentUser = getAuthenticatedUser(request, response, "/booking/seats?tripId=" + tripId);
+        if (currentUser == null) return;
 
-        // Lấy thông tin chuyến xe
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
-        if (trip.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/search?error=notfound");
+        String validationError = validateTripForBooking(trip);
+        if (validationError != null) {
+            response.sendRedirect(request.getContextPath() + "/search?error=" + validationError);
             return;
         }
-
-        // Lấy danh sách các ghế đã đặt
-        List<String> bookedSeats = bookingDAO.getBookedSeats(tripId);
 
         request.setAttribute("trip", trip);
         request.setAttribute("tripId", tripId);
-        request.setAttribute("bookedSeats", bookedSeats);
+        request.setAttribute("bookedSeats", bookingDAO.getBookedSeats(tripId));
 
         request.getRequestDispatcher("/WEB-INF/user/seat-map.jsp").forward(request, response);
     }
@@ -293,61 +212,41 @@ public class BookingController extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        String tripIdStr = request.getParameter("tripId");
+        User currentUser = getAuthenticatedUser(request, response, null);
+        if (currentUser == null) return;
+
+        int tripId = parseInt(request.getParameter("tripId"), 0);
         String seatsParam = request.getParameter("selectedSeats");
         String fullName = request.getParameter("fullName");
         String phone = request.getParameter("phone");
         String email = request.getParameter("email");
         String idCard = request.getParameter("idCard");
 
-        if (tripIdStr == null || seatsParam == null || fullName == null || phone == null
+        if (fullName == null || fullName.trim().isEmpty()) fullName = currentUser.getFullName();
+        if (phone == null || phone.trim().isEmpty()) phone = currentUser.getPhone();
+        if (email == null || email.trim().isEmpty()) email = currentUser.getEmail();
+
+        if (tripId <= 0 || seatsParam == null || fullName == null || phone == null
                 || fullName.trim().isEmpty() || phone.trim().isEmpty() || seatsParam.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 ghế!");
             handleSeatMap(request, response);
             return;
         }
 
-        int tripId;
-        try {
-            tripId = Integer.parseInt(tripIdStr.trim());
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/search?error=notfound");
-            return;
-        }
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
-        if (trip.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/search?error=notfound");
+        String validationError = validateTripForBooking(trip);
+        if (validationError != null) {
+            response.sendRedirect(request.getContextPath() + "/search?error=" + validationError);
             return;
         }
 
-        String tripStatus = "";
-        if (trip.get("status") != null) {
-            tripStatus = trip.get("status").toString();
-        }
-        if ("Đã hủy".equalsIgnoreCase(tripStatus) || "Hoàn thành".equalsIgnoreCase(tripStatus)) {
-            request.setAttribute("errorMessage", "Chuyến xe này đã hoàn thành hoặc bị hủy, không thể đặt vé!");
-            handleSeatMap(request, response);
-            return;
-        }
+        double price = (trip.get("price") instanceof Number) ? ((Number) trip.get("price")).doubleValue() : 0.0;
+        int availableSeats = (trip.get("availableSeats") instanceof Number) ? ((Number) trip.get("availableSeats")).intValue() : 0;
 
-        double price = 0.0;
-        if (trip.containsKey("price") && trip.get("price") instanceof Number) {
-            price = ((Number) trip.get("price")).doubleValue();
-        }
-
-        int availableSeats = 0;
-        if (trip.containsKey("availableSeats") && trip.get("availableSeats") instanceof Number) {
-            availableSeats = ((Number) trip.get("availableSeats")).intValue();
-        }
-
-        // Tách chuỗi ghế
-        String[] seatArr = seatsParam.split(",");
         List<String> chosenSeats = new ArrayList<>();
-        for (String s : seatArr) {
+        for (String s : seatsParam.split(",")) {
             String seat = s.trim().toUpperCase();
-            if (!seat.isEmpty()) {
-                chosenSeats.add(seat);
-            }
+            if (!seat.isEmpty()) chosenSeats.add(seat);
         }
 
         if (chosenSeats.isEmpty()) {
@@ -356,14 +255,18 @@ public class BookingController extends HttpServlet {
             return;
         }
 
-        // Kiểm tra số lượng ghế đặt không được vượt quá số ghế còn trống (Business logic 30%)
+        if (chosenSeats.size() > 5) {
+            request.setAttribute("errorMessage", "Mỗi lần đặt chỉ được chọn tối đa 5 vé! Vui lòng chỉ chọn tối đa 5 ghế.");
+            handleSeatMap(request, response);
+            return;
+        }
+
         if (chosenSeats.size() > availableSeats) {
             request.setAttribute("errorMessage", "Chuyến xe chỉ còn " + availableSeats + " chỗ trống, không thể đặt " + chosenSeats.size() + " ghế!");
             handleSeatMap(request, response);
             return;
         }
 
-        // Kiểm tra ghế đã bị đặt chưa
         List<String> currentBooked = bookingDAO.getBookedSeats(tripId);
         for (String seat : chosenSeats) {
             if (currentBooked.contains(seat)) {
@@ -373,10 +276,8 @@ public class BookingController extends HttpServlet {
             }
         }
 
-        // Lấy hoặc tạo khách hàng trong bảng Customers
         int customerId = bookingDAO.getOrCreateCustomer(fullName, phone, email, idCard);
 
-        // Lưu vé vào bảng Tickets
         List<String> ticketIds = new ArrayList<>();
         for (String seat : chosenSeats) {
             Ticket t = new Ticket(tripId, customerId, seat, "Đã thanh toán", price);
@@ -385,13 +286,12 @@ public class BookingController extends HttpServlet {
             }
         }
 
-        // Cập nhật số ghế trống
         bookingDAO.updateAvailableSeats(tripId, chosenSeats.size());
+        request.getSession().setAttribute("lastBookedCustomerId", customerId);
 
-        // Redirect sang trang kết quả đặt vé
         String ticketIdsStr = String.join(",", ticketIds);
-        response.sendRedirect(
-                request.getContextPath() + "/booking?action=success&tripId=" + tripId + "&customerId=" + customerId + "&tickets=" + ticketIdsStr);
+        response.sendRedirect(request.getContextPath() + "/booking?action=success&tripId=" + tripId 
+                + "&customerId=" + customerId + "&tickets=" + ticketIdsStr);
     }
 
     /**
@@ -399,56 +299,45 @@ public class BookingController extends HttpServlet {
      */
     private void handleBookingSuccess(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String tripIdStr = request.getParameter("tripId");
-        String customerIdStr = request.getParameter("customerId");
+        User currentUser = getAuthenticatedUser(request, response, null);
+        if (currentUser == null) return;
 
-        if (tripIdStr == null || customerIdStr == null) {
+        int tripId = parseInt(request.getParameter("tripId"), 0);
+        int customerId = parseInt(request.getParameter("customerId"), 0);
+        if (tripId <= 0 || customerId <= 0) {
             response.sendRedirect(request.getContextPath() + "/search");
             return;
         }
 
-        int tripId;
-        int customerId;
-        try {
-            tripId = Integer.parseInt(tripIdStr.trim());
-            customerId = Integer.parseInt(customerIdStr.trim());
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/search");
+        if (!isTicketOwner(currentUser, customerId, request.getSession(false))) {
+            response.sendRedirect(request.getContextPath() + "/search?error=unauthorized");
             return;
         }
 
         Map<String, Object> trip = bookingDAO.getTripDetails(tripId);
-
         List<Ticket> recentTickets = new ArrayList<>();
-        double totalAmount = 0.0;
 
         String ticketsParam = request.getParameter("tickets");
         if (ticketsParam != null && !ticketsParam.trim().isEmpty()) {
-            String[] tIds = ticketsParam.split(",");
-            for (String tidStr : tIds) {
-                try {
-                    int tid = Integer.parseInt(tidStr.trim());
+            for (String tidStr : ticketsParam.split(",")) {
+                int tid = parseInt(tidStr, 0);
+                if (tid > 0) {
                     Ticket t = bookingDAO.getById(tid);
-                    if (t != null) {
-                        recentTickets.add(t);
-                        if (!"Đã hủy".equalsIgnoreCase(t.getStatus())) {
-                            totalAmount += t.getTotalPrice();
-                        }
-                    }
-                } catch (NumberFormatException ignored) {
+                    if (t != null) recentTickets.add(t);
                 }
             }
         }
 
         if (recentTickets.isEmpty()) {
-            List<Ticket> allTickets = bookingDAO.getByCustomer(customerId);
-            for (Ticket t : allTickets) {
-                if (t.getTripId() == tripId) {
-                    recentTickets.add(t);
-                    if (!"Đã hủy".equalsIgnoreCase(t.getStatus())) {
-                        totalAmount += t.getTotalPrice();
-                    }
-                }
+            for (Ticket t : bookingDAO.getByCustomer(customerId)) {
+                if (t.getTripId() == tripId) recentTickets.add(t);
+            }
+        }
+
+        double totalAmount = 0.0;
+        for (Ticket t : recentTickets) {
+            if (!"Đã hủy".equalsIgnoreCase(t.getStatus())) {
+                totalAmount += t.getTotalPrice();
             }
         }
 
@@ -456,93 +345,213 @@ public class BookingController extends HttpServlet {
         request.setAttribute("tickets", recentTickets);
         request.setAttribute("totalAmount", totalAmount);
 
+        CustomerDAO customerDAO = new CustomerDAO();
+        model.Customer customer = customerDAO.getCustomerById(customerId);
+        request.setAttribute("customer", customer);
+
         request.getRequestDispatcher("/WEB-INF/user/booking.jsp").forward(request, response);
     }
 
     /**
      * 5. Xử lý hủy vé và tự động khóa tài khoản nếu hủy từ 3 vé trở lên (Vi phạm đặt vé)
+     * Đã khắc phục lỗ hổng IDOR: Bắt buộc đăng nhập và xác thực quyền sở hữu vé trước khi cho phép hủy
      */
     private void handleCancelTicket(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String ticketIdStr = request.getParameter("id");
-        String tripIdStr = request.getParameter("tripId");
-        String customerIdStr = request.getParameter("customerId");
-        String ticketsParam = request.getParameter("tickets");
+        User currentUser = getAuthenticatedUser(request, response, null);
+        if (currentUser == null) return;
 
-        if (ticketIdStr == null || ticketIdStr.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/search");
-            return;
-        }
-
-        int ticketId = 0;
-        try {
-            ticketId = Integer.parseInt(ticketIdStr.trim());
-        } catch (NumberFormatException e) {
+        int ticketId = parseInt(request.getParameter("id"), 0);
+        if (ticketId <= 0) {
             response.sendRedirect(request.getContextPath() + "/search");
             return;
         }
 
         Ticket ticket = bookingDAO.getById(ticketId);
         if (ticket == null) {
-            response.sendRedirect(request.getContextPath() + "/search");
+            response.sendRedirect(request.getContextPath() + "/search?error=notfound");
             return;
         }
 
-        int tripId = ticket.getTripId();
-        int customerId = ticket.getCustomerId();
-        if (tripIdStr != null && !tripIdStr.trim().isEmpty()) {
-            try {
-                tripId = Integer.parseInt(tripIdStr.trim());
-            } catch (NumberFormatException ignored) {
-            }
+        int tripId = parseInt(request.getParameter("tripId"), ticket.getTripId());
+        int customerId = parseInt(request.getParameter("customerId"), ticket.getCustomerId());
+        String ticketsParam = request.getParameter("tickets");
+
+        if (!isTicketOwner(currentUser, ticket.getCustomerId(), request.getSession(false))) {
+            String redirectUrl = request.getContextPath() + "/booking?action=success&tripId=" + tripId 
+                    + "&customerId=" + customerId + (ticketsParam != null ? "&tickets=" + ticketsParam.trim() : "") 
+                    + "&cancelMsg=unauthorized";
+            response.sendRedirect(redirectUrl);
+            return;
         }
-        if (customerIdStr != null && !customerIdStr.trim().isEmpty()) {
-            try {
-                customerId = Integer.parseInt(customerIdStr.trim());
-            } catch (NumberFormatException ignored) {
-            }
+
+        if ("Đã hủy".equalsIgnoreCase(ticket.getStatus())) {
+            String redirectUrl = request.getContextPath() + "/booking?action=success&tripId=" + tripId 
+                    + "&customerId=" + customerId + (ticketsParam != null ? "&tickets=" + ticketsParam.trim() : "") 
+                    + "&cancelMsg=already_cancelled";
+            response.sendRedirect(redirectUrl);
+            return;
         }
 
         boolean cancelled = bookingDAO.cancelTicket(ticketId);
 
-        jakarta.servlet.http.HttpSession session = request.getSession();
+        HttpSession session = request.getSession();
         int sessionCancelCount = 0;
         Object sessionCntObj = session.getAttribute("sessionCancelCount");
         if (sessionCntObj instanceof Integer) {
             sessionCancelCount = (Integer) sessionCntObj;
         }
         if (cancelled) {
-            sessionCancelCount = sessionCancelCount + 1;
+            sessionCancelCount++;
             session.setAttribute("sessionCancelCount", sessionCancelCount);
         }
 
         String customerPhone = bookingDAO.getCustomerPhoneById(customerId);
         int dbCancelCount = bookingDAO.countCancelledTickets(customerId, customerPhone);
+        int totalViolationCount = Math.max(sessionCancelCount, dbCancelCount);
 
-        int totalViolationCount = dbCancelCount;
-        if (sessionCancelCount > totalViolationCount) {
-            totalViolationCount = sessionCancelCount;
+        if (totalViolationCount >= 3) {
+            UserDAO userDAO = new UserDAO();
+            userDAO.lockUser(currentUser.getId());
+            session.invalidate();
+            response.sendRedirect(request.getContextPath() + "/login?msg=locked_violation");
+            return;
         }
 
-        // Quy tắc nghiệp vụ: Hủy vé từ 3 lần trở lên sẽ bị khóa tài khoản do vi phạm đặt vé
-        if (totalViolationCount >= 3) {
-            Object currentUserObj = session.getAttribute("currentUser");
-            if (currentUserObj instanceof model.User) {
-                model.User currentUser = (model.User) currentUserObj;
-                dao.UserDAO userDAO = new dao.UserDAO();
-                userDAO.lockUser(currentUser.getId());
-                session.invalidate();
-                response.sendRedirect(request.getContextPath() + "/login?msg=locked_violation");
-                return;
+        String redirectUrl = request.getContextPath() + "/booking?action=success&tripId=" + tripId 
+                + "&customerId=" + customerId + (ticketsParam != null ? "&tickets=" + ticketsParam.trim() : "") 
+                + "&cancelMsg=success&cancelCount=" + totalViolationCount;
+        response.sendRedirect(redirectUrl);
+    }
+
+    // ========================================================
+    // CÁC HÀM TIỆN ÍCH HELPER DÙNG CHUNG (TÁI CẤU TRÚC CODE SẠCH)
+    // ========================================================
+
+    private User getAuthenticatedUser(HttpServletRequest request, HttpServletResponse response, String redirectUrl) throws IOException {
+        HttpSession session = (redirectUrl != null) ? request.getSession() : request.getSession(false);
+        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+        if (currentUser == null) {
+            String redirect = (redirectUrl != null) ? "&redirect=" + URLEncoder.encode(redirectUrl, "UTF-8") : "";
+            response.sendRedirect(request.getContextPath() + "/login?msg=require_login" + redirect);
+            return null;
+        }
+        if ("Bị khóa".equalsIgnoreCase(currentUser.getStatus())) {
+            session.invalidate();
+            response.sendRedirect(request.getContextPath() + "/login?msg=locked_violation");
+            return null;
+        }
+        return currentUser;
+    }
+
+    private String validateTripForBooking(Map<String, Object> trip) {
+        if (trip == null || trip.isEmpty()) return "notfound";
+        String status = (trip.get("status") != null) ? trip.get("status").toString() : "";
+        if ("Đã hủy".equalsIgnoreCase(status) || "Hoàn thành".equalsIgnoreCase(status)) return "cancelled";
+        Object depObj = trip.get("departureTime");
+        if (depObj instanceof Date) {
+            long diff = ((Date) depObj).getTime() - System.currentTimeMillis();
+            if (diff <= 0) return "departed";
+            if (diff < 60 * 60 * 1000L) return "too_close";
+        }
+        return null;
+    }
+
+    private boolean isTicketOwner(User user, int customerId, HttpSession session) {
+        if (user.isAdmin()) return true;
+        String customerPhone = bookingDAO.getCustomerPhoneById(customerId);
+        String userPhone = user.getPhone() != null ? user.getPhone().trim() : "";
+        if (!userPhone.isEmpty() && customerPhone != null && userPhone.equalsIgnoreCase(customerPhone.trim())) {
+            return true;
+        }
+        CustomerDAO custDAO = new CustomerDAO();
+        model.Customer cust = custDAO.getCustomerById(customerId);
+        String userEmail = user.getEmail() != null ? user.getEmail().trim() : "";
+        if (cust != null && !userEmail.isEmpty() && userEmail.equalsIgnoreCase(cust.getEmail())) {
+            return true;
+        }
+        if (session != null) {
+            Object lastId = session.getAttribute("lastBookedCustomerId");
+            if (lastId instanceof Integer && ((Integer) lastId).intValue() == customerId) {
+                return true;
             }
         }
+        return false;
+    }
 
-        StringBuilder redirectUrl = new StringBuilder(request.getContextPath()
-                + "/booking?action=success&tripId=" + tripId + "&customerId=" + customerId);
-        if (ticketsParam != null && !ticketsParam.trim().isEmpty()) {
-            redirectUrl.append("&tickets=").append(ticketsParam.trim());
+    private void markBookableStatus(Map<String, Object> map, String timeKey, String bookableKey, String reasonKey, long now) {
+        Object depObj = map.get(timeKey);
+        if (depObj instanceof Date) {
+            long diff = ((Date) depObj).getTime() - now;
+            if (diff <= 0) {
+                map.put(bookableKey, false);
+                map.put(reasonKey, "Đã khởi hành");
+            } else if (diff < 60 * 60 * 1000L) {
+                map.put(bookableKey, false);
+                map.put(reasonKey, "Đã đóng cổng đặt vé");
+            } else {
+                map.put(bookableKey, true);
+            }
+        } else {
+            map.put(bookableKey, true);
         }
-        redirectUrl.append("&cancelMsg=success&cancelCount=").append(totalViolationCount);
-        response.sendRedirect(redirectUrl.toString());
+    }
+
+    private Map<String, Object> toTripMap(Trip t, String searchFrom, String searchTo) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", t.getId());
+        map.put("price", t.getPrice());
+        map.put("departureTime", t.getDepartureTime());
+        map.put("arrivalTime", t.getArrivalTime());
+        map.put("availableSeats", t.getAvailableSeats());
+        map.put("fromLocationName", (t.getRoute() != null && t.getRoute().getFromLocation() != null) 
+                ? t.getRoute().getFromLocation().getName() : searchFrom);
+        map.put("toLocationName", (t.getRoute() != null && t.getRoute().getToLocation() != null) 
+                ? t.getRoute().getToLocation().getName() : searchTo);
+        map.put("vehiclePlate", (t.getVehicle() != null && t.getVehicle().getLicensePlate() != null) 
+                ? t.getVehicle().getLicensePlate() : "");
+        map.put("vehicleType", (t.getVehicle() != null && t.getVehicle().getType() != null) 
+                ? t.getVehicle().getType() : "Chất lượng cao");
+        map.put("duration", (t.getRoute() != null) ? t.getRoute().getDuration() : 180);
+        map.put("distance", (t.getRoute() != null) ? t.getRoute().getDistance() : 150);
+        return map;
+    }
+
+    private String normalizeLocation(String loc, List<Location> list) {
+        if (loc == null || loc.trim().isEmpty() || "Tất cả".equalsIgnoreCase(loc.trim())) {
+            return null;
+        }
+        String trimmed = loc.trim();
+        int id = parseInt(trimmed, -1);
+        if (id > 0 && list != null) {
+            for (Location l : list) {
+                if (l.getId() == id) return l.getName();
+            }
+        }
+        if ("TP.HCM".equalsIgnoreCase(trimmed) || "TPHCM".equalsIgnoreCase(trimmed) || "Sài Gòn".equalsIgnoreCase(trimmed)) {
+            return "TP. Hồ Chí Minh";
+        }
+        return trimmed;
+    }
+
+    private int findLocationId(String locName, List<Location> list) {
+        if (locName == null || locName.trim().isEmpty() || list == null) return 0;
+        for (Location l : list) {
+            if (l.getName().equalsIgnoreCase(locName.trim())
+                    || l.getName().contains(locName.trim())
+                    || locName.trim().contains(l.getName())) {
+                return l.getId();
+            }
+        }
+        return 0;
+    }
+
+    private int parseInt(String str, int defaultVal) {
+        if (str != null && !str.trim().isEmpty()) {
+            try {
+                return Integer.parseInt(str.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        return defaultVal;
     }
 }

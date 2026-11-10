@@ -137,8 +137,7 @@
                                     </a>
                                     <!-- Nút Xóa -->
                                     <a href="${pageContext.request.contextPath}/admin/trip?action=delete&id=${t.id}" 
-                                       class="btn btn-sm btn-outline-danger" 
-                                       onclick="return confirm('Bạn có chắc muốn xóa chuyến xe #${t.id} này không?');" title="Xóa chuyến">
+                                       class="btn btn-sm btn-outline-danger" title="Xóa chuyến">
                                         <i class="bi bi-trash3-fill"></i>
                                     </a>
                                 </td>

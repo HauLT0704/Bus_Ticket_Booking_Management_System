@@ -102,8 +102,7 @@
                                         <i class="bi bi-pencil-square"></i> Sửa
                                     </a>
                                     <a href="${pageContext.request.contextPath}/admin/route?action=delete&id=${r.id}" 
-                                       class="btn btn-sm btn-outline-danger" 
-                                       onclick="return confirm('Bạn có chắc muốn xóa tuyến đường này không?');" title="Xóa tuyến">
+                                       class="btn btn-sm btn-outline-danger" title="Xóa tuyến">
                                         <i class="bi bi-trash3-fill"></i> Xóa
                                     </a>
                                 </td>

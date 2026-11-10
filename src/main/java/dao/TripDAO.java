@@ -4,6 +4,7 @@ import db.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -303,5 +304,29 @@ public class TripDAO extends DBContext {
             Logger.getLogger(TripDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 59;
+    }
+
+    /**
+     * Kiểm tra xe khách có bị trùng khoảng thời gian chạy với chuyến khác không
+     * Khoảng thời gian: (Khởi hành -> Tới nơi)
+     */
+    public boolean isVehicleScheduleConflict(int vehicleId, Timestamp depTime, Timestamp arrTime, int excludeTripId) {
+        if (vehicleId <= 0 || depTime == null || arrTime == null) return false;
+        String sql = "SELECT COUNT(*) FROM Trips WHERE VehicleId = ? AND Status != N'Đã hủy' "
+                   + "AND Id != ? AND DepartureTime < ? AND ArrivalTime > ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, vehicleId);
+            ps.setInt(2, excludeTripId);
+            ps.setTimestamp(3, arrTime);
+            ps.setTimestamp(4, depTime);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

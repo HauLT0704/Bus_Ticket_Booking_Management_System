@@ -14,21 +14,31 @@ import model.Customer;
  */
 public class CustomerDAO extends DBContext {
 
-    // 1. Lấy tất cả khách hàng
+    // 1. Lấy tất cả khách hàng (liên kết với tài khoản Users nếu có)
     public List<Customer> getAllCustomers() {
         List<Customer> list = new ArrayList<>();
-        String sql = "SELECT * FROM Customers ORDER BY Id DESC";
+        String sql = "SELECT c.Id, c.FullName, c.Phone, c.Email, c.IdCard, "
+                   + "       u.Id AS UserId, u.Username, u.Status AS UserStatus, u.FullName AS UserFullName "
+                   + "FROM Customers c "
+                   + "LEFT JOIN Users u ON (c.Phone = u.Phone AND u.Phone != '') "
+                   + "ORDER BY c.Id DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
+                int uId = rs.getInt("UserId");
+                Integer userId = rs.wasNull() ? null : uId;
                 Customer c = new Customer(
                         rs.getInt("Id"),
                         rs.getNString("FullName"),
                         rs.getString("Phone"),
                         rs.getString("Email"),
-                        rs.getString("IdCard")
+                        rs.getString("IdCard"),
+                        userId,
+                        rs.getString("Username"),
+                        rs.getString("UserStatus")
                 );
+                c.setUserFullName(rs.getNString("UserFullName"));
                 list.add(c);
             }
         } catch (Exception e) {
@@ -37,13 +47,18 @@ public class CustomerDAO extends DBContext {
         return list;
     }
 
-    // 2. Tìm kiếm khách hàng theo tên hoặc số điện thoại (TV3)
+    // 2. Tìm kiếm khách hàng theo tên, số điện thoại hoặc username tài khoản (TV3)
     public List<Customer> searchCustomers(String keyword) {
         List<Customer> list = new ArrayList<>();
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllCustomers();
         }
-        String sql = "SELECT * FROM Customers WHERE FullName LIKE ? OR Phone LIKE ? OR Email LIKE ? OR IdCard LIKE ? ORDER BY Id DESC";
+        String sql = "SELECT c.Id, c.FullName, c.Phone, c.Email, c.IdCard, "
+                   + "       u.Id AS UserId, u.Username, u.Status AS UserStatus, u.FullName AS UserFullName "
+                   + "FROM Customers c "
+                   + "LEFT JOIN Users u ON (c.Phone = u.Phone AND u.Phone != '') "
+                   + "WHERE c.FullName LIKE ? OR c.Phone LIKE ? OR c.Email LIKE ? OR c.IdCard LIKE ? OR u.Username LIKE ? "
+                   + "ORDER BY c.Id DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             String pattern = "%" + keyword.trim() + "%";
@@ -51,15 +66,22 @@ public class CustomerDAO extends DBContext {
             ps.setString(2, pattern);
             ps.setString(3, pattern);
             ps.setString(4, pattern);
+            ps.setString(5, pattern);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    int uId = rs.getInt("UserId");
+                    Integer userId = rs.wasNull() ? null : uId;
                     Customer c = new Customer(
                             rs.getInt("Id"),
                             rs.getNString("FullName"),
                             rs.getString("Phone"),
                             rs.getString("Email"),
-                            rs.getString("IdCard")
+                            rs.getString("IdCard"),
+                            userId,
+                            rs.getString("Username"),
+                            rs.getString("UserStatus")
                     );
+                    c.setUserFullName(rs.getNString("UserFullName"));
                     list.add(c);
                 }
             }
@@ -71,19 +93,30 @@ public class CustomerDAO extends DBContext {
 
     // 3. Lấy khách hàng theo ID (dùng cho chức năng Sửa)
     public Customer getCustomerById(int id) {
-        String sql = "SELECT * FROM Customers WHERE Id = ?";
+        String sql = "SELECT c.Id, c.FullName, c.Phone, c.Email, c.IdCard, "
+                   + "       u.Id AS UserId, u.Username, u.Status AS UserStatus, u.FullName AS UserFullName "
+                   + "FROM Customers c "
+                   + "LEFT JOIN Users u ON (c.Phone = u.Phone AND u.Phone != '') "
+                   + "WHERE c.Id = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Customer(
+                    int uId = rs.getInt("UserId");
+                    Integer userId = rs.wasNull() ? null : uId;
+                    Customer c = new Customer(
                             rs.getInt("Id"),
                             rs.getNString("FullName"),
                             rs.getString("Phone"),
                             rs.getString("Email"),
-                            rs.getString("IdCard")
+                            rs.getString("IdCard"),
+                            userId,
+                            rs.getString("Username"),
+                            rs.getString("UserStatus")
                     );
+                    c.setUserFullName(rs.getNString("UserFullName"));
+                    return c;
                 }
             }
         } catch (Exception e) {
