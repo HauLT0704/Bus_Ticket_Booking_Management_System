@@ -97,17 +97,17 @@
                                             ${c.seatNumber}
                                         </span>
                                     </td>
-                                    <td class="fw-semibold text-dark">${c.fullName}</td>
-                                    <td>${c.phone}</td>
+                                    <td class="fw-semibold text-dark"><c:out value="${c.fullName}"/></td>
+                                    <td><c:out value="${c.phone}"/></td>
                                     <td class="small text-muted">
                                         <c:choose>
-                                            <c:when test="${not empty c.email}">${c.email}</c:when>
+                                            <c:when test="${not empty c.email}"><c:out value="${c.email}"/></c:when>
                                             <c:otherwise>-</c:otherwise>
                                         </c:choose>
                                     </td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${not empty c.idCard}">${c.idCard}</c:when>
+                                            <c:when test="${not empty c.idCard}"><c:out value="${c.idCard}"/></c:when>
                                             <c:otherwise>-</c:otherwise>
                                         </c:choose>
                                     </td>

@@ -47,28 +47,28 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Họ và Tên: <span class="text-danger">*</span></label>
                     <input type="text" class="form-control py-2" name="fullName" 
-                           value="${customer != null ? customer.fullName : ''}" required 
+                           value="<c:out value='${customer != null ? customer.fullName : ""}'/>" required 
                            placeholder="Ví dụ: Nguyễn Văn A">
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Số Điện Thoại: <span class="text-danger">*</span></label>
                     <input type="tel" class="form-control py-2" name="phone" 
-                           value="${customer != null ? customer.phone : ''}" required 
+                           value="<c:out value='${customer != null ? customer.phone : ""}'/>" required 
                            placeholder="Ví dụ: 0912345678">
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Email:</label>
                     <input type="email" class="form-control py-2" name="email" 
-                           value="${customer != null ? customer.email : ''}" 
+                           value="<c:out value='${customer != null ? customer.email : ""}'/>" 
                            placeholder="Ví dụ: nguyenvana@gmail.com">
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Số CCCD / CMND:</label>
                     <input type="text" class="form-control py-2" name="idCard" 
-                           value="${customer != null ? customer.idCard : ''}" 
+                           value="<c:out value='${customer != null ? customer.idCard : ""}'/>" 
                            placeholder="Ví dụ: 079123456789">
                 </div>
 

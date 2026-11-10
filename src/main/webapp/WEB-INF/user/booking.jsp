@@ -68,13 +68,13 @@
                             <div class="col-md-6">
                                 <span class="text-muted small d-block">Họ và tên khách hàng:</span>
                                 <strong class="fs-6 text-primary">
-                                    <i class="bi bi-person-fill me-1"></i>${not empty customer.fullName ? customer.fullName : sessionScope.currentUser.fullName}
+                                    <i class="bi bi-person-fill me-1"></i><c:out value="${not empty customer.fullName ? customer.fullName : sessionScope.currentUser.fullName}"/>
                                 </strong>
                             </div>
                             <div class="col-md-6">
                                 <span class="text-muted small d-block">Số điện thoại liên hệ:</span>
                                 <strong class="fs-6 text-dark">
-                                    <i class="bi bi-telephone-fill me-1"></i>${not empty customer.phone ? customer.phone : sessionScope.currentUser.phone}
+                                    <i class="bi bi-telephone-fill me-1"></i><c:out value="${not empty customer.phone ? customer.phone : sessionScope.currentUser.phone}"/>
                                 </strong>
                             </div>
                         </div>

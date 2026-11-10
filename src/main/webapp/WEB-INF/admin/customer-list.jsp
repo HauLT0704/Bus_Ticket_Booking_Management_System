@@ -86,7 +86,7 @@
                             <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
                             <input type="text" name="keyword" class="form-control" 
                                    placeholder="Nhập tên hoặc số điện thoại..." 
-                                   value="${keyword}">
+                                   value="<c:out value='${keyword}'/>">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -123,13 +123,13 @@
                                         <td class="ps-3 fw-bold text-muted">#${c.id}</td>
                                         <td class="fw-semibold text-dark">
                                             <i class="bi bi-person-circle text-secondary me-1"></i>
-                                            ${c.fullName}
+                                            <c:out value="${c.fullName}"/>
                                         </td>
                                         <td>
                                             <c:choose>
                                                 <c:when test="${not empty c.username}">
                                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-                                                        <i class="bi bi-person-badge me-1"></i>${c.username}
+                                                        <i class="bi bi-person-badge me-1"></i><c:out value="${c.username}"/>
                                                     </span>
                                                 </c:when>
                                                 <c:otherwise>
@@ -137,8 +137,13 @@
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td><span class="badge bg-light text-dark border">${c.phone}</span></td>
-                                        <td>${c.email != null ? c.email : '-'}</td>
+                                        <td><span class="badge bg-light text-dark border"><c:out value="${c.phone}"/></span></td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${not empty c.email}"><c:out value="${c.email}"/></c:when>
+                                                <c:otherwise>-</c:otherwise>
+                                            </c:choose>
+                                        </td>
                                         <td class="text-center">
                                             <c:choose>
                                                 <c:when test="${empty c.userId}">
@@ -165,7 +170,7 @@
                                                     <c:when test="${c.userStatus == 'Bị khóa'}">
                                                         <a href="${pageContext.request.contextPath}/admin/customer?action=unlock&userId=${c.userId}" 
                                                            class="btn btn-sm btn-outline-success me-1" 
-                                                           onclick="return confirm('Kích hoạt / Mở khóa lại tài khoản [${c.username}]?');" 
+                                                           onclick="return confirm('Kích hoạt / Mở khóa lại tài khoản [<c:out value="${c.username}"/>]?');" 
                                                            title="Kích hoạt tài khoản">
                                                             <i class="bi bi-unlock-fill"></i> Kích hoạt
                                                         </a>
@@ -173,7 +178,7 @@
                                                     <c:otherwise>
                                                         <a href="${pageContext.request.contextPath}/admin/customer?action=lock&userId=${c.userId}" 
                                                            class="btn btn-sm btn-outline-danger me-1" 
-                                                           onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản [${c.username}]?');" 
+                                                           onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản [<c:out value="${c.username}"/>]?');" 
                                                            title="Khóa tài khoản">
                                                             <i class="bi bi-lock-fill"></i> Khóa
                                                         </a>

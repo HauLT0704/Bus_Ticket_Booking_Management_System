@@ -63,19 +63,19 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <span class="text-muted small d-block">Họ và tên:</span>
-                                    <strong class="fs-6 text-primary">${customer.fullName}</strong>
+                                    <strong class="fs-6 text-primary"><c:out value="${customer.fullName}"/></strong>
                                 </div>
                                 <div class="col-sm-6">
                                     <span class="text-muted small d-block">Số điện thoại:</span>
-                                    <span class="badge bg-white text-dark border px-2 py-1 fs-6">${customer.phone}</span>
+                                    <span class="badge bg-white text-dark border px-2 py-1 fs-6"><c:out value="${customer.phone}"/></span>
                                 </div>
                                 <div class="col-sm-6">
                                     <span class="text-muted small d-block">Email:</span>
-                                    <strong>${not empty customer.email ? customer.email : '-'}</strong>
+                                    <strong><c:out value="${not empty customer.email ? customer.email : '-'}"/></strong>
                                 </div>
                                 <div class="col-sm-6">
                                     <span class="text-muted small d-block">Số CCCD / CMND:</span>
-                                    <strong>${not empty customer.idCard ? customer.idCard : '-'}</strong>
+                                    <strong><c:out value="${not empty customer.idCard ? customer.idCard : '-'}"/></strong>
                                 </div>
                             </div>
                         </div>
